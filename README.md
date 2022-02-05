@@ -1,5 +1,5 @@
-Some notes
-Robert, r.gray@ucl.ac.uk, 3/2/2022
+## Some notes
+(Robert, r.gray@ucl.ac.uk, 3/2/2022)
 
 All the code is in 'SharedModules'. To create a new autoencoder just create a folder alongside SharedModules and put a run_autoencoder.py file in it, just like the ones I have included (or just use the ones I have included!). The only difference between the 3 models I have included is the 'nii_target_shape' argument, and the number of layers (see 'Layer definitions' below): the 64^3 model has one more layer than the 32^3 model, and the 128^3 model has one more layer than that).
 
@@ -15,7 +15,7 @@ To specify the backend and endpoint (see the point below about hyper_params['CUD
 python -m torch.distributed.run --nnodes=1 --nproc_per_node=8 --rdzv_backend=c10d --rdzv_endpoint=127.0.0.1:12345 run_autoencoder.py
 
 
-The more important options:
+## The more important options:
 
 -> hyper_params['nifti_flair_dir']
 All the Biobank niftis are loose in this folder. We have affine-aligned them to a template and skull stripped them, using SPM.
