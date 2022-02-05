@@ -1,22 +1,12 @@
 import os
 import sys
-import shutil
 import argparse
 import torch
-import math as maths
 
-# How to start script:
-#python -m torch.distributed.run --nnodes=1 --nproc_per_node=8 --rdzv_backend=c10d --rdzv_endpoint=127.0.0.1:12345 run_model.py
-
-# How to kill zombies:
-# kill $(ps aux | grep config.py | grep -v grep | awk '{print $2}')
-# kill $(ps aux | grep multiprocessing.spawn | grep -v grep | awk '{print $2}')
-# python -m torch.distributed.launch --nproc_per_node=4 --nnodes=2 --node_rank=0 run_model.py
-#$ python -m torch.distributed.launch --nproc_per_node=1 --nnodes=2 --node_rank=0 run_model.py
 
 current_dir = os.path.dirname(os.path.realpath('__file__'))
 current_parent_dir = os.path.dirname(os.path.dirname(os.path.realpath('__file__')))
-shared_module_dir = os.path.abspath(os.path.join(current_parent_dir, 'SharedModules'))
+shared_module_dir = os.path.abspath(os.path.join(current_parent_dir, 'modules'))
 sys.path.insert(0, shared_module_dir)
 model_name = os.path.split(current_dir)[-1]
 
@@ -104,9 +94,9 @@ hyper_params['sequence_type'] = 'flair'
 hyper_params['mask_out_wmls_in_likelihood'] = False
 hyper_params['load_metadata'] = False
 
-hyper_params['veto_transformations'] = True
+hyper_params['veto_transformations'] = False
 hyper_params['apply_augmentations_to_validation_set'] = False
-hyper_params['visualise_training_pipeline_before_starting'] = False
+hyper_params['visualise_training_pipeline_before_starting'] = True
 hyper_params['nifti_flair_dir'] = '/media/robert/Data2/Biobank_FLAIRs_for_VAE/'
 # hyper_params['max_niis_to_use'] = 100
 hyper_params['discard_abnormally_small_niftis'] = True
@@ -117,10 +107,22 @@ hyper_params['nifti_standardise'] = True
 hyper_params['shuffle_niftis'] = False
 hyper_params['save_recons_to_mat'] = False
 
-hyper_params['RandHistogramShift_num_control_points'] = (5, 15)
-hyper_params['RandHistogramShift_prob'] = 0.2
-hyper_params['RandScaleIntensity_factors'] = 0.1
-hyper_params['RandHistogramShift_prob'] = 0.2
+hyper_params['min_small_crop_size'] = [int(0.95 * x) for x in hyper_params['nii_target_shape']]
+hyper_params['rot_angle_in_rads'] = 2 * 3.14159 / 360 * ( 5 )
+hyper_params['shear_angle_in_rads'] = 2 * 3.14159 / 360 * ( 5 )
+hyper_params['translate_range'] = 10
+hyper_params['scale_range'] = 0.1
+hyper_params['three_d_deform_sigmas'] = (1, 3)
+hyper_params['three_d_deform_magnitudes'] = (3, 5)
+hyper_params['histogram_shift_control_points'] = (10, 15)
+hyper_params['anisotroper_ranges'] = [0.8, 0.95]
+hyper_params['prob_affine'] = 0.1
+hyper_params['prob_torchvision_simple'] = 0.1
+hyper_params['prob_three_d_elastic'] = 0.1
+hyper_params['prob_torchvision_histogram'] = 0.1
+hyper_params['prob_torchvision_complex'] = 0.1
+hyper_params['prob_spiking'] = 0.1
+hyper_params['prob_anisotroper'] = 0.1
 
 # hyper_params['CUDA_devices'] = [str(x) for x in range(2)]
 #hyper_params['CUDA_devices'] = ['4', '5', '6', '7']
@@ -141,7 +143,7 @@ hyper_params['master_port'] = 12345
 hyper_params['workers_per_process'] = 20
 os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(hyper_params['CUDA_devices'])
 
-import training_script_vae_new as training_script
+from modules.orchestration import training_script_vae_new as training_script
 
 if __name__ == '__main__':
     torch.multiprocessing.set_start_method('spawn')
