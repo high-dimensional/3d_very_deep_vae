@@ -332,7 +332,7 @@ def main(hyper_params):
         print("JPEG base dir: " + hyper_params['jpeg_dir'])
 
         from torchvision import transforms
-        from modules.data_tools.jpeg_dataset import JPEGDataset
+        from ..data_tools.jpeg_dataset import JPEGDataset
 
         jpeg_dir = hyper_params['jpeg_dir']
         file_names = [f for f in os.listdir(jpeg_dir) if os.path.isfile(os.path.join(jpeg_dir, f))]
