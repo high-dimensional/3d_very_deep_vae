@@ -1,11 +1,11 @@
 from monai import transforms as monai_trans
-from modules.misc import misc
-from modules.data_tools.torch_wrapper import TorchIOWrapper
+from ..misc import misc
+from .torch_wrapper import TorchIOWrapper
 from torchio import transforms as torchio_trans
-# from modules.data_tools.random_registered_3d_haircut import ThreeDHaircut
-from modules.data_tools.random_anisotropiser_augmentation import Anisotropiser
-from modules.data_tools.clamp_by_percentile_augmentation import ClampByPercentile as ClampByPercentile
-from modules.data_tools.crop_nii_by_given_amount import CropNIIByGivenAmount as CropNIIByGivenAmount
+# from .random_registered_3d_haircut import ThreeDHaircut
+from .random_anisotropiser_augmentation import Anisotropiser
+from .clamp_by_percentile_augmentation import ClampByPercentile as ClampByPercentile
+from .crop_nii_by_given_amount import CropNIIByGivenAmount as CropNIIByGivenAmount
 
 
 def create_data_transformations(hyper_params, device, keys=None, clamp_percentiles=None, keys_json=None, keys_imaging=None):

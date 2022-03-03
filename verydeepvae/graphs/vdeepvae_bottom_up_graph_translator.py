@@ -1,7 +1,7 @@
 import torch.nn as nn
-from modules.graph_components.conv_block import ConvBlock
-from modules.graph_components.pooling_block import PoolingBlock
-from modules.graph_components.unpooling_block import UnPoolingBlock
+from ..graph_components.conv_block import ConvBlock
+from ..graph_components.pooling_block import PoolingBlock
+from ..graph_components.unpooling_block import UnPoolingBlock
 
 
 class Graph:

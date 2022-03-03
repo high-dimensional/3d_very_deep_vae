@@ -3,7 +3,7 @@ import torch
 import numpy as np
 # from monai.data import NiftiDataset
 from torch.utils.data import DataLoader
-import data_handling
+from . import data_handling
 from torchvision import transforms
 from PIL import Image
 

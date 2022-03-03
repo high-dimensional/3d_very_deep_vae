@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.cuda.amp as amp
-from modules.misc import misc
+from ..misc import misc
 import numpy as np
 
 

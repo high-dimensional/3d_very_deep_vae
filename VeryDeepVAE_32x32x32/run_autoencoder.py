@@ -1,12 +1,9 @@
 import os
-import sys
 import argparse
 import torch
+from verydeepvae.orchestration import training_script_vae_new as training_script
 
 current_dir = os.path.dirname(os.path.realpath('__file__'))
-current_parent_dir = os.path.dirname(os.path.dirname(os.path.realpath('__file__')))
-shared_module_dir = os.path.abspath(os.path.join(current_parent_dir, 'modules'))
-sys.path.insert(0, shared_module_dir)
 model_name = os.path.split(current_dir)[-1]
 
 hyper_params = {'total_epochs': 100000, 'batch_size': 10, 'l2_reg_coeff': 1e-4,
@@ -152,8 +149,6 @@ hyper_params['master_addr'] = 'localhost'
 hyper_params['master_port'] = 12345
 hyper_params['workers_per_process'] = 20
 os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(hyper_params['CUDA_devices'])
-
-from modules.orchestration import training_script_vae_new as training_script
 
 if __name__ == '__main__':
     torch.multiprocessing.set_start_method('spawn')

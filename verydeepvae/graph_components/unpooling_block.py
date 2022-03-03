@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.cuda.amp as amp
-from modules.misc import misc
+from ..misc import misc
 
 
 class UnPoolingBlock(nn.Module):

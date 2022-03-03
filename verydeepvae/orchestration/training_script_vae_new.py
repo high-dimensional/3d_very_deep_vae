@@ -9,13 +9,13 @@ import numpy as np
 import csv
 import platform
 import socket
-from modules.data_tools import data_handling
-from modules.misc import visuals
-from modules.misc import misc
-from modules.orchestration import run_epoch_hemispheres as run_epoch
+from ..data_tools import data_handling
+from ..misc import visuals
+from ..misc import misc
+from ..orchestration import run_epoch_hemispheres as run_epoch
 from monai.data import DataLoader, Dataset
-from modules.graphs.vdeepvae_bottom_up_graph_translator import Graph as BottomUpGraph
-from modules.graphs.vdeepvae_top_down_graph_translator import Graph as TopDownGraph
+from ..graphs.vdeepvae_bottom_up_graph_translator import Graph as BottomUpGraph
+from ..graphs.vdeepvae_top_down_graph_translator import Graph as TopDownGraph
 import monai
 import torchio
 from tqdm import tqdm
@@ -24,7 +24,7 @@ from torch.utils.data import DataLoader
 import math as maths
 import torch.distributed as dist
 import nibabel as nib
-from modules.data_tools.data_transformations import create_data_transformations
+from ..data_tools.data_transformations import create_data_transformations
 
 """
 Reproducability...

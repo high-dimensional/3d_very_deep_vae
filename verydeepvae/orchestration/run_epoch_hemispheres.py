@@ -2,7 +2,7 @@ import torch
 import torch.cuda.amp as amp
 import numpy as np
 import csv
-from modules.misc import misc
+from ..misc import misc
 import torch.distributed as dist
 
 

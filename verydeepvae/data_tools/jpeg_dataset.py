@@ -6,8 +6,8 @@ import monai
 # from monai.data import NiftiDataset
 # from monai.transforms import AddChannel, Compose, RandRotate90, Resize, ScaleIntensity, ToTensor
 # from torch.utils.data import DataLoader
-# import data_handling
-# import misc
+# from . import data_handling
+# from ..misc import misc
 # from os import listdir
 # from os.path import isfile, join
 

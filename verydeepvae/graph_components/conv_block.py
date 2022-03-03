@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.cuda.amp as amp
 import numpy as np
-from modules.misc import misc
+from ..misc import misc
 
 
 class ConvBlock(nn.Module):
