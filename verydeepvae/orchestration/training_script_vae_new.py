@@ -7,7 +7,6 @@ import torchvision
 import torch.cuda.amp as amp
 import numpy as np
 import csv
-import platform
 import socket
 from ..data_tools import data_handling
 from ..misc import visuals
@@ -135,37 +134,6 @@ def main(hyper_params):
     misc.print_0(hyper_params, "Host name: " + hyper_params['host_name'])
     misc.print_0(hyper_params, "CUDA version: " + torch.version.cuda)
     misc.print_0(hyper_params, "CUDA_VISIBLE_DEVICES: " + os.environ['CUDA_VISIBLE_DEVICES'])
-
-    # To make it easier to run code at home, work & on servers, paths for these different environments are hard-coded.
-    # Host name + OS is used to determine which set of paths to use.
-    if platform.system() == 'Linux':
-        if hyper_params['host_name'] == 'robert-work':
-            hyper_params['h5py_base_dir'] = '/mnt/wwn-0x5002538d42570f81-part1/DataForNeuralNetworks/'
-            hyper_params['nifti_base_dir'] = '/media/robert/Data1/'
-            if 'checkpoint_folder' not in hyper_params:
-                hyper_params['checkpoint_folder'] = os.path.join('/home/robert/Documents/Torch_Checkpoints/',
-                                                                 hyper_params['model_name'])
-            if 'tensorboard_dir' not in hyper_params:
-                hyper_params['tensorboard_dir'] = os.path.join('/home/robert/Documents/Torch_TensorBoard/',
-                                                               hyper_params['model_name'])
-        else:
-            hyper_params['h5py_base_dir'] = '/local_dir/DataForNeuralNetworks/'
-            hyper_params['nifti_base_dir'] = '/local_dir/big_data/'
-            if 'checkpoint_folder' not in hyper_params:
-                hyper_params['checkpoint_folder'] = os.path.join('/local_dir/Torch_Checkpoints/',
-                                                                 hyper_params['model_name'])
-            if 'tensorboard_dir' not in hyper_params:
-                hyper_params['tensorboard_dir'] = os.path.join('/local_dir/Torch_TensorBoard/',
-                                                               hyper_params['model_name'])
-    else:
-        hyper_params['nifti_base_dir'] = 'C:\\Users\\rober\\Documents\\'
-        hyper_params['h5py_base_dir'] = 'C:\\Users\\rober\\Documents\\DataForNeuralNetworks\\'
-        if 'checkpoint_folder' not in hyper_params:
-            hyper_params['checkpoint_folder'] = os.path.join('C:\\Users\\rober\\Documents\\Torch_Checkpoints\\',
-                                                             hyper_params['model_name'])
-        if 'tensorboard_dir' not in hyper_params:
-            hyper_params['tensorboard_dir'] = os.path.join('C:\\Users\\rober\\Documents\\Torch_TensorBoard\\',
-                                                           hyper_params['model_name'])
 
     samples_dir = os.path.join(hyper_params['recon_folder'], 'samples')
 
