@@ -98,23 +98,6 @@ hyper_params['tensorboard_dir'] = '/home/robert/temp/Torch_TensorBoard/'
 # hyper_params['checkpoint_folder'] = '/local_dir/Torch_Checkpoints/'
 # hyper_params['tensorboard_dir'] = '/local_dir/Torch_TensorBoard/'
 
-hyper_params['min_small_crop_size'] = [int(0.95 * x) for x in hyper_params['nii_target_shape']]
-hyper_params['rot_angle_in_rads'] = 2 * 3.14159 / 360 * ( 5 )
-hyper_params['shear_angle_in_rads'] = 2 * 3.14159 / 360 * ( 5 )
-hyper_params['translate_range'] = 10
-hyper_params['scale_range'] = 0.1
-hyper_params['three_d_deform_sigmas'] = (1, 3)
-hyper_params['three_d_deform_magnitudes'] = (3, 5)
-hyper_params['histogram_shift_control_points'] = (10, 15)
-hyper_params['anisotroper_ranges'] = [0.8, 0.95]
-hyper_params['prob_affine'] = 0.1
-hyper_params['prob_torchvision_simple'] = 0.1
-hyper_params['prob_three_d_elastic'] = 0.1
-hyper_params['prob_torchvision_histogram'] = 0.1
-hyper_params['prob_torchvision_complex'] = 0.1
-hyper_params['prob_spiking'] = 0.1
-hyper_params['prob_anisotroper'] = 0.1
-
 # hyper_params['CUDA_devices'] = [str(x) for x in range(2)]
 #hyper_params['CUDA_devices'] = ['4', '5', '6', '7']
 hyper_params['CUDA_devices'] = ['0']
@@ -137,4 +120,3 @@ hyper_params['workers_per_process'] = 5
 if __name__ == '__main__':
     torch.multiprocessing.set_start_method('spawn')
     training_script.main(hyper_params)
-

@@ -30,9 +30,9 @@ class ThreeDHaircut(Randomizable, MapTransform):
         self._do_transform = False
 
     def randomize(self, data: Optional[Any] = None) -> None:
-        self.index_1 = int(self.R.uniform(low=0, high=self.range[0]))
-        self.index_2 = int(self.R.uniform(low=0, high=self.range[1]))
-        self.index_3 = int(self.R.uniform(low=0, high=self.range[2]))
+        self.index_1 = int(self.R.uniform(low=1, high=self.range[0]))
+        self.index_2 = int(self.R.uniform(low=1, high=self.range[1]))
+        self.index_3 = int(self.R.uniform(low=1, high=self.range[2]))
         self._do_transform = self.R.random() < self.prob
         self.pick_axis = self.R.random()
 

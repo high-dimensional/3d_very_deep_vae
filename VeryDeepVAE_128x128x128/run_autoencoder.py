@@ -52,16 +52,6 @@ hyper_params['optimise_only_prior'] = False
 #hyper_params['noise_injection_multiplier'] = 0.001
 hyper_params['veto_noise_injection'] = False
 hyper_params['generate_mask_for_validating'] = False
-
-hyper_params['kl_weight_auto_adjustment'] = False
-hyper_params['kl_weight_adjustment_period'] = 5
-hyper_params['kl_weight_epoch_patience'] = 0
-hyper_params['kl_weight_max_multiplier'] = 100
-hyper_params['kl_weight_min_multiplier'] = 1
-hyper_params['kl_weight_multiplier_increment'] = 1
-hyper_params['kl_weight_percentile_to_reweight'] = 25
-hyper_params['kl_weight_verbose'] = False
-
 hyper_params['verbose'] = True
 
 hyper_params['latents_per_channel'] = [2, 7, 6, 5, 4, 3, 2, 1]
@@ -105,23 +95,6 @@ hyper_params['shuffle_niftis'] = False
 hyper_params['save_recons_to_mat'] = False
 hyper_params['checkpoint_folder'] = '/local_dir/Torch_Checkpoints/'
 hyper_params['tensorboard_dir'] = '/local_dir/Torch_TensorBoard/'
-
-hyper_params['min_small_crop_size'] = [int(0.95 * x) for x in hyper_params['nii_target_shape']]
-hyper_params['rot_angle_in_rads'] = 2 * 3.14159 / 360 * ( 5 )
-hyper_params['shear_angle_in_rads'] = 2 * 3.14159 / 360 * ( 5 )
-hyper_params['translate_range'] = 10
-hyper_params['scale_range'] = 0.1
-hyper_params['three_d_deform_sigmas'] = (1, 3)
-hyper_params['three_d_deform_magnitudes'] = (3, 5)
-hyper_params['histogram_shift_control_points'] = (10, 15)
-hyper_params['anisotroper_ranges'] = [0.8, 0.95]
-hyper_params['prob_affine'] = 0.1
-hyper_params['prob_torchvision_simple'] = 0.1
-hyper_params['prob_three_d_elastic'] = 0.1
-hyper_params['prob_torchvision_histogram'] = 0.1
-hyper_params['prob_torchvision_complex'] = 0.1
-hyper_params['prob_spiking'] = 0.1
-hyper_params['prob_anisotroper'] = 0.1
 
 # hyper_params['CUDA_devices'] = [str(x) for x in range(2)]
 #hyper_params['CUDA_devices'] = ['4', '5', '6', '7']

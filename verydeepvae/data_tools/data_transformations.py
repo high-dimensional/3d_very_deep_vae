@@ -7,16 +7,16 @@ from .clamp_by_percentile_augmentation import ClampByPercentile as ClampByPercen
 from .crop_nii_by_given_amount import CropNIIByGivenAmount as CropNIIByGivenAmount
 
 
-def create_data_transformations(hyper_params, device, keys=None, clamp_percentiles=None, keys_json=None, keys_imaging=None):
+def create_data_transformations(hyper_params, device, keys=None, clamp_percentiles=None):
     """
-    ClampByPercentile should have upper limit as 99.95
+    Create the input pipeline, with optional data augmentation
     """
 
     if 'clamp_percentiles' in hyper_params:
         clamp_percentiles = hyper_params['clamp_percentiles']
     else:
         if clamp_percentiles is None:
-            clamp_percentiles = [0.05, 99.5]
+            clamp_percentiles = [0.05, 99.95]
 
     misc.print_0(hyper_params, "Clamping input outside percentiles " + str(clamp_percentiles[0]) + " and " +
                                                                            str(clamp_percentiles[1]))
@@ -24,27 +24,12 @@ def create_data_transformations(hyper_params, device, keys=None, clamp_percentil
     if keys is None:
         keys = ["full_brain"]
 
-    # resize_block = [monai_trans.Resized(keys=keys, spatial_size=tuple(hyper_params['nii_target_shape']))]
-
-    # Resize x2 with nearest neighbour only, to keep it binary
-    resize_block = []
-    resize_block += [monai_trans.Resized(keys=[k for k in keys if not k == 'x2'],
-                                         spatial_size=tuple(hyper_params['nii_target_shape']))]
-
-    # resize_block += [monai_trans.Resized(keys=keys,
-    #                                      mode='nearest',
-    #                                      spatial_size=tuple(hyper_params['nii_target_shape']))]
-
-    # list(set(lst1) & set(lst2))
+    resize_block = [monai_trans.Resized(keys=keys, spatial_size=tuple(hyper_params['nii_target_shape']))]
 
     if 'veto_transformations' in hyper_params and hyper_params['veto_transformations']:
         misc.print_0(hyper_params, "Vetoing augmentation transformations")
         train_transforms = [monai_trans.LoadImaged(keys=keys),
                             monai_trans.AddChanneld(keys=keys)]
-
-        # if 'simulate_missingness' in hyper_params and hyper_params['simulate_missingness']:
-        #     train_transforms += [SimulateMissingnessAugmentation(keys=keys)]
-        # I've moved these to the end of the pipeline - 0 indicates missingness now
 
         if 'crop_nii_at_loadtime' in hyper_params:
             print("Cropping an padding on the basis of the volume occupied by Biobank T1s at 181x217x181")
@@ -54,32 +39,40 @@ def create_data_transformations(hyper_params, device, keys=None, clamp_percentil
         train_transforms += resize_block
 
         if misc.key_is_true(hyper_params, 'use_tanh_output') or misc.key_is_true(hyper_params, 'use_sigmoid_output'):
-            # train_transforms += [ClampByPercentile(keys=keys,
-            #                                        lower=clamp_percentiles[0], upper=clamp_percentiles[1],
-            #                                        allow_missing_keys=True)]
-            train_transforms += [ClampByPercentile(keys=[k for k in keys if not k == 'x2'],
-                                                   lower=clamp_percentiles[0], upper=clamp_percentiles[1],
+            train_transforms += [ClampByPercentile(keys=keys,
+                                                   lower=clamp_percentiles[0],
+                                                   upper=clamp_percentiles[1],
                                                    allow_missing_keys=True)]
 
-        train_transforms += [monai_trans.NormalizeIntensityd(keys=[k for k in keys if not k == 'x2'])]
+        train_transforms += [monai_trans.NormalizeIntensityd(keys=keys)]
 
         if misc.key_is_true(hyper_params, 'use_tanh_output'):
             train_transforms += [monai_trans.ScaleIntensityd(keys=keys, minv=-1.0, maxv=1.0)]
         elif misc.key_is_true(hyper_params, 'use_sigmoid_output'):
             train_transforms += [monai_trans.ScaleIntensityd(keys=keys, minv=0, maxv=1.0)]
 
-        # # Always include this, if only for the recon loaders
-        # train_transforms += [SimulateMissingnessAugmentation(keys=keys, keys_imaging=keys_imaging)]
-        #
-        # if keys_json is not None:
-        #     train_transforms += [LoadJSONd(keys=keys_json)]
-        #
-        # if keys_json is not None and 'simulate_missingness' in hyper_params and hyper_params['simulate_missingness']:
-        #     train_transforms += [SimulateJSONMissingnessAugmentation(keys=keys_json)]
-
         train_transforms = monai_trans.Compose(train_transforms)
         val_transforms = train_transforms
     else:
+
+        if 'min_small_crop_size' not in hyper_params:
+            # This is a bit crude...
+            hyper_params['min_small_crop_size'] = [int(0.95 * x) for x in hyper_params['nii_target_shape']]
+            hyper_params['rot_angle_in_rads'] = 2 * 3.14159 / 360 * (5)
+            hyper_params['shear_angle_in_rads'] = 2 * 3.14159 / 360 * (5)
+            hyper_params['translate_range'] = 10
+            hyper_params['scale_range'] = 0.1
+            hyper_params['three_d_deform_sigmas'] = (1, 3)
+            hyper_params['three_d_deform_magnitudes'] = (3, 5)
+            hyper_params['histogram_shift_control_points'] = (10, 15)
+            hyper_params['anisotroper_ranges'] = [0.8, 0.95]
+            hyper_params['prob_affine'] = 0.1
+            hyper_params['prob_torchvision_simple'] = 0.1
+            hyper_params['prob_three_d_elastic'] = 0.1
+            hyper_params['prob_torchvision_histogram'] = 0.1
+            hyper_params['prob_torchvision_complex'] = 0.1
+            hyper_params['prob_spiking'] = 0.1
+            hyper_params['prob_anisotroper'] = 0.1
 
         min_small_crop_size = hyper_params['min_small_crop_size']
         rot_angle_in_rads = hyper_params['rot_angle_in_rads']
@@ -89,22 +82,17 @@ def create_data_transformations(hyper_params, device, keys=None, clamp_percentil
         three_d_deform_sigmas = hyper_params['three_d_deform_sigmas']
         three_d_deform_magnitudes = hyper_params['three_d_deform_magnitudes']
         histogram_shift_control_points = hyper_params['histogram_shift_control_points']
-        # haircut_ranges = hyper_params['haircut_ranges']
         anisotroper_ranges = hyper_params['anisotroper_ranges']
         prob_affine = hyper_params['prob_affine']
         prob_torchvision_simple = hyper_params['prob_torchvision_simple']
         prob_three_d_elastic = hyper_params['prob_three_d_elastic']
         prob_torchvision_histogram = hyper_params['prob_torchvision_histogram']
         prob_torchvision_complex = hyper_params['prob_torchvision_complex']
-        # prob_haircut = hyper_params['prob_haircut']
         prob_spiking = hyper_params['prob_spiking']
         prob_anisotroper = hyper_params['prob_anisotroper']
 
         train_transforms = [monai_trans.LoadImaged(keys=keys),
                             monai_trans.AddChanneld(keys=keys)]
-
-        # if 'simulate_missingness' in hyper_params and hyper_params['simulate_missingness']:
-        #     train_transforms += [SimulateMissingnessAugmentation(keys=keys)]
 
         if 'crop_nii_at_loadtime' in hyper_params:
             print("Cropping an padding on the basis of the voplume ocupied by Biobank T1s at 181x217x181")
@@ -114,7 +102,7 @@ def create_data_transformations(hyper_params, device, keys=None, clamp_percentil
         train_transforms += resize_block
 
         train_transforms += [Anisotropiser(keys=keys, scale_range=anisotroper_ranges, prob=prob_anisotroper),
-                             # ThreeDHaircut(keys=keys, range=haircut_ranges, prob=prob_haircut)
+                             ThreeDHaircut(keys=keys, range=haircut_ranges, prob=prob_haircut)
                              ]
 
         if misc.key_is_true(hyper_params, 'use_tanh_output') or misc.key_is_true(hyper_params, 'use_sigmoid_output'):
@@ -131,9 +119,9 @@ def create_data_transformations(hyper_params, device, keys=None, clamp_percentil
                                                              prob=prob_torchvision_histogram),
                              monai_trans.RandScaleIntensityd(keys=keys, factors=0.05,
                                                              prob=prob_torchvision_simple),
-                             monai_trans.RandGibbsNoised(keys=keys, prob=prob_torchvision_simple,
-                                                         alpha=(0.0, 1.0), as_tensor_output=False,
-                                                         allow_missing_keys=False),
+                             # monai_trans.RandGibbsNoised(keys=keys, prob=prob_torchvision_simple,
+                             #                             alpha=(0.0, 1.0), as_tensor_output=False,
+                             #                             allow_missing_keys=False),
                              # monai_trans.RandKSpaceSpikeNoised(keys, global_prob=1.0, prob=prob_torchvision_complex,
                              #                                   img_intensity_range=None,
                              #                                   label_intensity_range=None, channel_wise=True,
@@ -211,9 +199,11 @@ def create_data_transformations(hyper_params, device, keys=None, clamp_percentil
 
             val_transforms += resize_block
 
-            if misc.key_is_true(hyper_params, 'use_tanh_output') or misc.key_is_true(hyper_params, 'use_sigmoid_output'):
+            if misc.key_is_true(hyper_params, 'use_tanh_output') or \
+                    misc.key_is_true(hyper_params, 'use_sigmoid_output'):
                 val_transforms += [ClampByPercentile(keys=keys,
-                                                     lower=clamp_percentiles[0], upper=clamp_percentiles[1])]
+                                                     lower=clamp_percentiles[0],
+                                                     upper=clamp_percentiles[1])]
             val_transforms += [monai_trans.NormalizeIntensityd(keys=keys)]
             if misc.key_is_true(hyper_params, 'use_tanh_output'):
                 val_transforms += [monai_trans.ScaleIntensityd(keys, minv=-1.0, maxv=1.0)]
