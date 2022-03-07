@@ -103,8 +103,8 @@ hyper_params['nii_target_shape'] = [128, 128, 128]
 hyper_params['nifti_standardise'] = True
 hyper_params['shuffle_niftis'] = False
 hyper_params['save_recons_to_mat'] = False
-hyper_params['checkpoint_folder'] = ''
-hyper_params['tensorboard_dir'] = ''
+hyper_params['checkpoint_folder'] = '/local_dir/Torch_Checkpoints/'
+hyper_params['tensorboard_dir'] = '/local_dir/Torch_TensorBoard/'
 
 hyper_params['min_small_crop_size'] = [int(0.95 * x) for x in hyper_params['nii_target_shape']]
 hyper_params['rot_angle_in_rads'] = 2 * 3.14159 / 360 * ( 5 )

@@ -108,6 +108,8 @@ hyper_params['nii_target_shape'] = [32, 32, 32]
 hyper_params['nifti_standardise'] = True
 hyper_params['shuffle_niftis'] = False
 hyper_params['save_recons_to_mat'] = False
+hyper_params['checkpoint_folder'] = '/local_dir/Torch_Checkpoints/'
+hyper_params['tensorboard_dir'] = '/local_dir/Torch_TensorBoard/'
 
 hyper_params['RandHistogramShift_num_control_points'] = (5, 15)
 hyper_params['RandHistogramShift_prob'] = 0.2
