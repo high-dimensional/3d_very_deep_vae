@@ -127,11 +127,12 @@ hyper_params['use_DDP'] = True
 parser = argparse.ArgumentParser()
 parser.add_argument("--local_rank", type=int)
 parser.add_argument("--CUDA_devices", type=str)
+parser.add_argument("--nifti_flair_dir", type=str)
 args = parser.parse_args()
 hyper_params['args'] = args
 hyper_params['master_addr'] = 'localhost'
 hyper_params['master_port'] = 12345
-hyper_params['workers_per_process'] = 20
+hyper_params['workers_per_process'] = 5
 
 if __name__ == '__main__':
     torch.multiprocessing.set_start_method('spawn')

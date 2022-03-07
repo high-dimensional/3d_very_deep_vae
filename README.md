@@ -28,11 +28,11 @@ kill $(ps aux | grep config.py | grep -v grep | awk '{print $2}') and kill $(ps 
 
 ## The more important hyperparameters:
 
-- hyper_params['nifti_flair_dir']
+- nifti_flair_dir
 
-All the Biobank niftis are loose in this folder. We have affine-aligned them to a template and skull stripped them, using SPM.
+All the Biobank niftis are loose in this folder. Specify either as the string hyper_params['nifti_flair_dir'] or as a string input argument (--nifti_flair_dir). We have affine-aligned them to a template and skull-stripped them using SPM.
 
-- 'batch_size'
+- batch_size
 
 At 128 cubed we train with a batch size of 2 or 3 on Cambridge 1, and a batch size of 1 on our V100 DGX1s. Much higher batch sizes are possible at lower resolutions!
 

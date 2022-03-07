@@ -69,19 +69,20 @@ def main(hyper_params):
                 nifti_b1000_paths = nifti_paths_flair
         else:
             misc.print_0(hyper_params, "Sequence type: " + hyper_params['sequence_type'])
-    
-            # This is the hemisphere model's nifti loader code
-            if misc.key_is_true(hyper_params, 'hack_use_t1'):
-                misc.print_0(hyper_params, "HACK: using T1s")
-                filenames = os.listdir(hyper_params['nifti_flair_dir'])
-                filenames = [f for f in filenames if not f.startswith('.')]  # Remove hidden files
-                filenames = [f for f in filenames if '_20253_2_0.zip' in f]  # Remove hidden files
-                filenames_flair = [f for f in filenames if '_t1' in f]
+
+            if hasattr(hyper_params['args'], 'nifti_flair_dir') and hyper_params['args'].nifti_flair_dir is not None:
+                hyper_params['nifti_flair_dir'] = hyper_params['args'].nifti_flair_dir
+                misc.print_0(hyper_params, "nifti_flair_dir found in input args: " + hyper_params['nifti_flair_dir'])
+            elif 'nifti_flair_dir' in hyper_params:
+                misc.print_0(hyper_params, "nifti_flair_dir found in hyper_params: " + hyper_params['nifti_flair_dir'])
             else:
-                filenames = os.listdir(hyper_params['nifti_flair_dir'])
-                filenames = [f for f in filenames if not f.startswith('.')]  # Remove hidden files
-                filenames = [f for f in filenames if '_20253_2_0.zip' in f]  # Remove hidden files
-                filenames_flair = [f for f in filenames if '_flair' in f]
+                misc.print_0(hyper_params, "nifti_flair_dir not found. Quitting.")
+                quit()
+
+            filenames = os.listdir(hyper_params['nifti_flair_dir'])
+            filenames = [f for f in filenames if not f.startswith('.')]  # Remove hidden files
+            filenames = [f for f in filenames if '_20253_2_0.zip' in f]  # Remove hidden files
+            filenames_flair = [f for f in filenames if '_flair' in f]
     
             nifti_paths_flair = [os.path.join(hyper_params['nifti_flair_dir'], name) for name in filenames_flair]
 
