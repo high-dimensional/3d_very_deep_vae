@@ -2,7 +2,7 @@ import torch.nn as nn
 from ..graph_components.conv_block import ConvBlock
 from ..graph_components.skip_block import SkipBlock
 from ..graph_components.unpooling_block import UnPoolingBlock
-from ..graph_components.top_down_block_simplified_translator_v2 import TopDownBlock
+from ..graph_components.top_down_block import TopDownBlock
 from ..misc import misc
 from ..graph_components.tanh_block import TanhBlock
 from ..graph_components.sigmoid_block import SigmoidBlock
@@ -76,16 +76,6 @@ class Graph:
             self.latents_to_use = hyper_params['latents_to_use']
         else:
             self.latents_to_use = None
-
-        def get_convp_and_convq(convp_params, convp_names, convq_params, convq_names, module):
-            for name, param in module.named_parameters():
-                if 'convs_p' in name:
-                    convp_params.append(param)
-                    convp_names.append(name)
-                elif 'convs_q' in name:
-                    convq_params.append(param)
-                    convq_names.append(name)
-            return convp_params, convp_names, convq_params, convq_names
         ###############################################################################################
         ###############################################################################################
 
@@ -99,12 +89,6 @@ class Graph:
 
         groups = []
         self.latents_per_group = []
-
-        # Find the index of the last latent
-        # index_of_last_latent = 0
-        # for k in range(len(latents_per_chanel)):
-        #     if latents_per_chanel[k] > 0:
-        #         index_of_last_latent = k
 
         # Group 1 (no unpooling)
         channels_in = channels[0]

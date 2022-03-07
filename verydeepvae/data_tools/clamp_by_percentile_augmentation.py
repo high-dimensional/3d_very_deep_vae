@@ -1,10 +1,7 @@
-from collections.abc import Iterable
-from typing import Any, Dict, Hashable, Mapping, Optional, Sequence, Tuple, Union
+from typing import Dict, Hashable, Mapping
 import numpy as np
-import torch
 from monai.config import KeysCollection
-from monai.transforms.compose import MapTransform, Randomizable
-from monai.utils import dtype_torch_to_numpy, ensure_tuple_size
+from monai.transforms.compose import MapTransform
 
 
 class ClampByPercentile(MapTransform):

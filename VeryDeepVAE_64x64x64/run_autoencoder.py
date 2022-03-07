@@ -7,7 +7,7 @@ from verydeepvae.orchestration import training_script_vae_new as training_script
 current_dir = os.path.dirname(os.path.realpath('__file__'))
 model_name = os.path.split(current_dir)[-1]
 
-hyper_params = {'total_epochs': 100000, 'batch_size': 10, 'l2_reg_coeff': 1e-4,
+hyper_params = {'total_epochs': 100000, 'batch_size': 2, 'l2_reg_coeff': 1e-4,
                 'learning_rate': 1e-3, 'train_frac': 0.95, 'half_precision': False, 'print_model': False,
                 'current_dir': current_dir, 'model_name': model_name}
 
@@ -100,7 +100,7 @@ hyper_params['veto_transformations'] = False
 hyper_params['apply_augmentations_to_validation_set'] = False
 hyper_params['visualise_training_pipeline_before_starting'] = True
 hyper_params['nifti_flair_dir'] = '/media/robert/Data2/Biobank_FLAIRs_for_VAE/'
-# hyper_params['max_niis_to_use'] = 1000
+hyper_params['max_niis_to_use'] = 200
 hyper_params['discard_abnormally_small_niftis'] = True
 hyper_params['affine_and_elastic_on_gpu'] = False
 hyper_params['use_nii_data'] = True
@@ -108,8 +108,10 @@ hyper_params['nii_target_shape'] = [64, 64, 64]
 hyper_params['nifti_standardise'] = True
 hyper_params['shuffle_niftis'] = False
 hyper_params['save_recons_to_mat'] = False
-hyper_params['checkpoint_folder'] = '/local_dir/Torch_Checkpoints/'
-hyper_params['tensorboard_dir'] = '/local_dir/Torch_TensorBoard/'
+hyper_params['checkpoint_folder'] = '/home/robert/temp/Torch_Checkpoints/'
+hyper_params['tensorboard_dir'] = '/home/robert/temp/Torch_TensorBoard/'
+# hyper_params['checkpoint_folder'] = '/local_dir/Torch_Checkpoints/'
+# hyper_params['tensorboard_dir'] = '/local_dir/Torch_TensorBoard/'
 
 hyper_params['min_small_crop_size'] = [int(0.95 * x) for x in hyper_params['nii_target_shape']]
 hyper_params['rot_angle_in_rads'] = 2 * 3.14159 / 360 * ( 5 )
@@ -128,9 +130,9 @@ hyper_params['prob_torchvision_complex'] = 0.1
 hyper_params['prob_spiking'] = 0.1
 hyper_params['prob_anisotroper'] = 0.1
 
-# hyper_params['CUDA_devices'] = [str(x) for x in range(8)]
+hyper_params['CUDA_devices'] = [str(x) for x in range(2)]
 #hyper_params['CUDA_devices'] = ['4', '5', '6', '7']
-hyper_params['CUDA_devices'] = ['0']
+# hyper_params['CUDA_devices'] = ['0']
 
 hyper_params['current_dir'] = current_dir
 hyper_params['model_name'] = model_name

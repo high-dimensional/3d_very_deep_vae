@@ -6,7 +6,7 @@ from verydeepvae.orchestration import training_script_vae_new as training_script
 current_dir = os.path.dirname(os.path.realpath('__file__'))
 model_name = os.path.split(current_dir)[-1]
 
-hyper_params = {'total_epochs': 100000, 'batch_size': 10, 'l2_reg_coeff': 1e-4,
+hyper_params = {'total_epochs': 100000, 'batch_size': 2, 'l2_reg_coeff': 1e-4,
                 'learning_rate': 1e-3, 'train_frac': 0.95, 'half_precision': False, 'print_model': False,
                 'current_dir': current_dir, 'model_name': model_name}
 

@@ -99,8 +99,6 @@ class ConvBlock(nn.Module):
             self.use_skip_connection = True
 
             if not self.channels_in == self.channels_out:
-                # if self.channels_out > 3:
-                # if not(self.channels_in == 6 and self.channels_out == 3):
                 misc.print_0(self.hyper_params, "-> Skip (projection)")
                 self.skip_con = ConvOp(in_channels=self.channels_in, out_channels=self.channels_out, kernel_size=1,
                                        stride=1, padding=0, bias=True)
@@ -108,8 +106,6 @@ class ConvBlock(nn.Module):
 
                 if 'zero_biases' in self.hyper_params and self.hyper_params['zero_biases']:
                     self.skip_con.bias.data *= 0.0
-                # else:
-                #     print("")
             else:
                 misc.print_0(self.hyper_params, "-> Skip (identity)")
 
@@ -141,14 +137,6 @@ class ConvBlock(nn.Module):
                                                 kernel_size=self.hidden_kernel_size, stride=1, padding=0,
                                                 bias=True))
 
-                # self.convolutions_bn = nn.ModuleList()
-                # self.convolutions_bn.append(
-                #     BatchNormOp(num_features=self.channels_in, eps=1e-5, momentum=0.1, affine=True,
-                #                 track_running_stats=True))
-                # self.convolutions_bn.append(
-                #     BatchNormOp(num_features=self.channels_out, eps=1e-5, momentum=0.1, affine=True,
-                #                 track_running_stats=True))
-
                 self.param_count += self.hidden_kernel_size ** d * self.channels_in * self.channels_in
                 self.param_count += self.hidden_kernel_size ** d * self.channels_in * self.channels_out
 
@@ -161,14 +149,6 @@ class ConvBlock(nn.Module):
                 self.convolutions.append(ConvOp(in_channels=self.channels_in, out_channels=self.channels_out,
                                                 kernel_size=1, stride=1, padding=0,
                                                 bias=True))
-
-                # self.convolutions_bn = nn.ModuleList()
-                # self.convolutions_bn.append(
-                #     BatchNormOp(num_features=self.channels_in, eps=1e-5, momentum=0.1, affine=True,
-                #                 track_running_stats=True))
-                # self.convolutions_bn.append(
-                #     BatchNormOp(num_features=self.channels_out, eps=1e-5, momentum=0.1, affine=True,
-                #                 track_running_stats=True))
 
                 self.param_count += self.channels_in * self.channels_out
 
@@ -183,14 +163,6 @@ class ConvBlock(nn.Module):
                 self.convolutions.append(ConvOp(in_channels=self.channels_out, out_channels=self.channels_out,
                                                 kernel_size=self.hidden_kernel_size, stride=1, padding=0,
                                                 bias=True))
-
-                # self.convolutions_bn = nn.ModuleList()
-                # self.convolutions_bn.append(
-                #     BatchNormOp(num_features=self.channels_out, eps=1e-5, momentum=0.1, affine=True,
-                #                 track_running_stats=True))
-                # self.convolutions_bn.append(
-                #     BatchNormOp(num_features=self.channels_out, eps=1e-5, momentum=0.1, affine=True,
-                #                 track_running_stats=True))
 
                 self.param_count += self.hidden_kernel_size ** d * self.channels_in * self.channels_out
                 self.param_count += self.hidden_kernel_size ** d * self.channels_out * self.channels_out
@@ -209,20 +181,6 @@ class ConvBlock(nn.Module):
                                             kernel_size=self.hidden_kernel_size, stride=1, padding=0, bias=True))
             self.convolutions.append(ConvOp(in_channels=self.channels_hidden, out_channels=self.channels_out,
                                             kernel_size=1, stride=1, padding=0, bias=True))
-
-            # self.convolutions_bn = nn.ModuleList()
-            # self.convolutions_bn.append(
-            #     BatchNormOp(num_features=self.channels_hidden, eps=1e-5, momentum=0.1, affine=True,
-            #                 track_running_stats=True))
-            # self.convolutions_bn.append(
-            #     BatchNormOp(num_features=self.channels_hidden, eps=1e-5, momentum=0.1, affine=True,
-            #                 track_running_stats=True))
-            # self.convolutions_bn.append(
-            #     BatchNormOp(num_features=self.channels_hidden, eps=1e-5, momentum=0.1, affine=True,
-            #                 track_running_stats=True))
-            # self.convolutions_bn.append(
-            #     BatchNormOp(num_features=self.channels_hidden, eps=1e-5, momentum=0.1, affine=True,
-            #                 track_running_stats=True))
 
             self.param_count += self.channels_in * self.channels_hidden
             self.param_count += self.hidden_kernel_size ** d * self.channels_hidden * self.channels_hidden
@@ -279,16 +237,6 @@ class ConvBlock(nn.Module):
                     if self.apply_batch_norm:
                         data = self.batch_norm(data)
 
-                    # data = self.convolutions[0](self.pad(data))
-                    # data = self.convolutions_bn[0](data)
-                    # data = self.activation(data)
-                    # data = self.convolutions[1](self.pad(data))
-                    # data = self.convolutions_bn[1](data)
-                    # data = self.output_activation(data)
-
-                    # if self.apply_batch_norm:
-                    #     data = self.batch_norm(data)
-
             else:
                 data = self.activation(data)
                 data = self.convolutions[0](data)
@@ -302,22 +250,6 @@ class ConvBlock(nn.Module):
                 if self.apply_batch_norm:
                     data = self.batch_norm(data)
 
-                # data = self.convolutions[0](data)
-                # data = self.convolutions_bn[0](data)
-                # data = self.activation(data)
-                # data = self.convolutions[1](self.pad(data))
-                # data = self.convolutions_bn[1](data)
-                # data = self.activation(data)
-                # data = self.convolutions[2](self.pad(data))
-                # data = self.convolutions_bn[2](data)
-                # data = self.activation(data)
-                # data = self.convolutions[3](data)
-                # data = self.convolutions_bn[3](data)
-                # data = self.output_activation(data)
-
-                # if self.apply_batch_norm:
-                #     data = self.batch_norm(data)
-
             if self.use_skip_connection:
                 if 'use_rezero' in self.hyper_params and self.hyper_params['use_rezero']:
                     if self.channels_in == self.channels_out:
@@ -328,13 +260,7 @@ class ConvBlock(nn.Module):
                     if self.channels_in == self.channels_out:
                         data += copy_of_incoming_data
                     else:
-                        # if self.channels_out > 3:
-                        # if not (self.channels_in == 6 and self.channels_out == 3):
                         data += self.skip_con(copy_of_incoming_data)
-                        # else:
-                        #     pass
-                        # pass
-                        # data += self.skip_con(copy_of_incoming_data)
 
             data_dictionary['data'] = data
 

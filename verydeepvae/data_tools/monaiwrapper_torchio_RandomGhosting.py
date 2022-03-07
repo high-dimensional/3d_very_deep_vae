@@ -1,16 +1,8 @@
-from torchio import Subject, LabelMap, ScalarImage, RandomAffine
-from torchio import transforms as torchio_trans
-from monai.transforms.compose import MapTransform, Randomizable
+from torchio import Subject, ScalarImage
+from monai.transforms.compose import MapTransform
 from monai.config import KeysCollection
-from typing import Any, Dict, Hashable, Mapping, Optional, Sequence, Tuple, Union
+from typing import Dict, Hashable, Mapping
 import numpy as np
-import torchio as tio
-from monai.transforms import LoadNifti, Randomizable, apply_transform
-from monai import transforms as monai_trans
-from numpy import random
-import torch
-import numpy
-import torchio
 
 
 class WrappedRandomGhosting(MapTransform):

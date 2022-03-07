@@ -1,6 +1,4 @@
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.cuda.amp as amp
 
 
@@ -69,26 +67,18 @@ class ResBlock(nn.Module):
             data = self.hidden_activation(data)
 
             data = self.convolutions[0](data)
-            # data = self.hidden_activation(data)
             if self.hidden_kernel_size == 3:
                 data = self.convolutions[1](self.pad(data))
-                # data = self.hidden_activation(data)
                 data = self.convolutions[2](self.pad(data))
-                # data = self.hidden_activation(data)
             else:
                 data = self.convolutions[1](data)
-                # data = self.hidden_activation(data)
                 data = self.convolutions[2](data)
-                # data = self.hidden_activation(data)
             data = self.convolutions[3](data)
 
             if self.visible_activation is not None:
                 # The .clone() stops the error '...SigmoidBackward, is at version 1;
                 # expected version 0 instead' when using a nn.Sigmoid() activation.
                 data = self.visible_activation(data).clone()
-
-            # # In the paper they scale by the reciprocal of the sqaure root of the depth (but 'depth' is not defined)
-            # data /= torch.tensor(self.depth).to(data.device)
 
             if not self.veto_skip_connection:
                 # For the output layers we veto the skip connection to ensure the image of the block is the image of the

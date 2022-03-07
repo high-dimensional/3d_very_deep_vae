@@ -1,5 +1,4 @@
-## Some notes
-(Robert, r.gray@ucl.ac.uk, 5/2/2022)
+# Some notes
 
 All the code is in 'SharedModules'. To create a new autoencoder just create a folder alongside SharedModules and put a run_autoencoder.py file in it, just like the ones I have included (or just use the ones I have included!). The only difference between the 3 models I have included is the 'nii_target_shape' argument, and the number of layers (see 'Layer definitions' below): the 64^3 model has one more layer than the 32^3 model, and the 128^3 model has one more layer than that).
 
@@ -17,7 +16,13 @@ python -m torch.distributed.run --nnodes=1 --nproc_per_node=8 run_autoencoder.py
 
 python -m torch.distributed.run --nnodes=1 --nproc_per_node=8 --rdzv_backend=c10d --rdzv_endpoint=127.0.0.1:12345 run_autoencoder.py
 
-- To kill zombies
+- To run on two nodes, each with 8 cards
+
+python -m torch.distributed.run --nproc_per_node=8 --master_addr=123.45.678.90 --master_port=1234 --nnodes=2 --node_rank=0 run_autoencoder.py
+
+python -m torch.distributed.run --nproc_per_node=8 --master_addr=123.45.678.90 --master_port=1234 --nnodes=2 --node_rank=1 run_autoencoder.py
+
+# To kill zombies
 
 kill $(ps aux | grep config.py | grep -v grep | awk '{print $2}') and kill $(ps aux | grep multiprocessing.spawn | grep -v grep | awk '{print $2}')
 

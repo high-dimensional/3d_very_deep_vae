@@ -1,8 +1,5 @@
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.cuda.amp as amp
-import numpy as np
 
 
 class IdentityBlock(nn.Module):
@@ -22,15 +19,8 @@ class IdentityBlock(nn.Module):
 
         if 'data_is_3d' in self.hyper_params and self.hyper_params['data_is_3d']:
             ConvOp = nn.Conv3d
-            d = 3
-            filter_space_dims = str(self.hidden_kernel_size) + "x" + str(self.hidden_kernel_size) + "x" + \
-                                str(self.hidden_kernel_size)
-            one_dims = '1x1x1'
         else:
             ConvOp = nn.Conv2d
-            d = 2
-            filter_space_dims = str(self.hidden_kernel_size) + "x" + str(self.hidden_kernel_size)
-            one_dims = '1x1'
 
         self.skip_con = ConvOp(in_channels=self.channels_in, out_channels=self.channels_out, kernel_size=1,
                                stride=1, padding=0, bias=True)

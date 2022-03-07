@@ -1,20 +1,9 @@
 import os
 import torch
-# import torch.nn as nn
 import numpy as np
-import monai
-# from monai.data import NiftiDataset
-# from monai.transforms import AddChannel, Compose, RandRotate90, Resize, ScaleIntensity, ToTensor
-# from torch.utils.data import DataLoader
-# from . import data_handling
-# from ..misc import misc
-# from os import listdir
-# from os.path import isfile, join
-
 from torch.utils.data import Dataset
 from PIL import Image
 Image.MAX_IMAGE_PIXELS = None
-from skimage import io, transform
 from PIL import ImageOps
 
 

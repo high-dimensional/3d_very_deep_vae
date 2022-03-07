@@ -1,9 +1,7 @@
-from torchio import Subject, LabelMap, ScalarImage
+from torchio import Subject, ScalarImage
 from monai.transforms.compose import MapTransform, Randomizable
 from monai.config import KeysCollection
-from typing import Any, Dict, Hashable, Mapping, Optional, Sequence, Tuple, Union
-import torchio as tio
-import torchio
+from typing import Any, Dict, Hashable, Mapping, Optional
 import numpy as np
 
 

@@ -1,5 +1,4 @@
 import numpy as np
-import h5py
 import os
 import shutil
 
@@ -26,19 +25,6 @@ def save_to_mat(dictionary, filepath):
     file_handler = open(filepath, "wb")
     sio.savemat(file_handler, mdict=dictionary, do_compression=False)
     file_handler.close()
-
-
-def hdf5_info(file_path):
-    f = h5py.File(file_path, 'r')
-    fields = list(f.keys())
-    raw_data = f[fields[0]]
-    data_shape = raw_data.shape[0:-1]
-    data_type = raw_data.dtype
-    length = raw_data.shape[-1]
-    f.close()
-    output = [file_path, length, data_shape, data_type, fields]
-    print("hdf5 info: ", output)
-    return output
 
 
 def compute_min_max_from_loader(data_loader):

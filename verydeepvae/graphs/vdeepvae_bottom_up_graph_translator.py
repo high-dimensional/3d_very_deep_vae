@@ -21,9 +21,6 @@ class Graph:
         hyper_params = kwargs["hyper_params"]
         input_channels = kwargs["input_channels"]
 
-        # if misc.key_is_true(kwargs, 'length_of_flag'):
-        #     input_channels += kwargs['length_of_flag']
-
         channels = [input_channels] + hyper_params['channels']
         channels_hidden = hyper_params['channels_hidden']
         groups = []
@@ -62,13 +59,6 @@ class Graph:
                 channels_in_2 = channels[k + 1]
                 concat_flag = False
 
-            # if k == len(hyper_params['channels'])-1:
-            #     hidden_kernel_size = 1  # Anticipating 1x1 feature maps on the final layer
-            # elif k == len(hyper_params['channels'])-2:
-            #     hidden_kernel_size = 2  # Anticipating 2x2 feature maps on the penultimate layer
-            # else:
-            #     hidden_kernel_size = 3  # Anticipating NxN feature maps, N > 2
-            # hidden_kernel_size = 3
             hidden_kernel_size = hyper_params['kernel_sizes_bottom_up'][k]
 
             if hyper_params['verbose']:
@@ -90,21 +80,6 @@ class Graph:
                                             normalise_weight_by_depth=True,
                                             half_precision=hyper_params['half_precision'])]
             else:
-                # current_block += [ConvBlock(channels_in=channels[k],
-                #                             channels_hidden=channels_hidden[k + 1],
-                #                             channels_out=channels[k + 1],
-                #                             hidden_kernel_size=hidden_kernel_size,
-                #                             veto_bottleneck=not hyper_params['bottleneck_resnet_encoder'],
-                #                             hyper_params=hyper_params,
-                #                             half_precision=hyper_params['half_precision'])]
-                # current_block += [ConvBlock(channels_in=channels[k + 1],
-                #                             channels_hidden=channels_hidden[k + 1],
-                #                             channels_out=channels[k + 1],
-                #                             hidden_kernel_size=hidden_kernel_size,
-                #                             veto_bottleneck=not hyper_params['bottleneck_resnet_encoder'],
-                #                             lateral_skip_con_index=k,  # Adds the block's output to the data dictionary
-                #                             hyper_params=hyper_params,
-                #                             half_precision=hyper_params['half_precision'])]
                 current_block += [ConvBlock(concat_flag=concat_flag,
                                             channels_in=channels_in_1,
                                             # channels_in=channels[k],
