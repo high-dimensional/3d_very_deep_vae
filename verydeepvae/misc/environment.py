@@ -15,8 +15,12 @@ def setup_environment(hyper_params):
     See https://pytorch.org/docs/stable/elastic/run.html for a list of environmental variables created by
     torch.distributed.run
     """
-    hyper_params['host_name'] = socket.gethostname()
-    os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(hyper_params['CUDA_devices'])
+
+    if hasattr(hyper_params['args'], 'CUDA_devices') and hyper_params['args'].CUDA_devices is not None:
+        hyper_params['CUDA_devices'] = hyper_params['args'].CUDA_devices.split(",")
+    elif 'CUDA_devices' not in hyper_params and 'CUDA_devices' not in os.environ:
+        print("Cannot find CUDA_devices in input args, hyper_params or environmental vars. Quitting.")
+        quit()
 
     if 'LOCAL_WORLD_SIZE' in os.environ and os.environ['LOCAL_WORLD_SIZE'] is not None:
         """
@@ -58,7 +62,13 @@ def setup_environment(hyper_params):
             local_rank = hyper_params['local_rank']
             misc.print_0(hyper_params, "Found local_rank in hyper_params: " + str(local_rank))
 
-        world_size = hyper_params['world_size']
+        if 'world_size' in hyper_params:
+            world_size = hyper_params['world_size']
+            misc.print_0(hyper_params, "Found world_size in hyper_params: " + str(world_size))
+        else:
+            hyper_params['world_size'] = len(hyper_params['CUDA_devices'])
+            misc.print_0(hyper_params, "world_size not found in hyper_params, using len(CUDA_devices): " +
+                         str(hyper_params['world_size']))
 
         if 'master_addr' in hyper_params:
             master_addr = hyper_params['master_addr']
@@ -75,7 +85,6 @@ def setup_environment(hyper_params):
         os.environ['MASTER_ADDR'] = master_addr
         os.environ['MASTER_PORT'] = str(master_port)
 
-        misc.print_0(hyper_params, "Found world_size in hyper_params: " + str(world_size))
         misc.print_0(hyper_params, "master_addr: " + str(master_addr))
         misc.print_0(hyper_params, "master_port: " + str(master_port))
 
@@ -83,6 +92,9 @@ def setup_environment(hyper_params):
         hyper_params['global_rank'] = hyper_params['local_rank']
 
     os.environ['OMP_NUM_THREADS'] = str(hyper_params['workers_per_process'])
+    os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(hyper_params['CUDA_devices'])
+
+    hyper_params['host_name'] = socket.gethostname()
 
     device = torch.device('cuda', local_rank)
     hyper_params['device'] = device
@@ -105,32 +117,23 @@ def setup_environment(hyper_params):
     misc.print_0(hyper_params, "Master Port: " + str(hyper_params['master_port']))
     misc.print_0(hyper_params, "Workers per process: " + str(hyper_params['workers_per_process']))
 
-    if world_size > 1:
+    if hyper_params['global_world_size'] > 1:
         misc.print_0(hyper_params, "Waiting for all DDP processes to establish contact...", end="")
-
-    # from datetime import timedelta
-    # if 'LOCAL_WORLD_SIZE' in os.environ:
-    #     dist.init_process_group(backend='nccl', timeout=timedelta(seconds=3))
-    # else:
-    #     dist.init_process_group(backend='nccl', timeout=timedelta(seconds=3), rank=local_rank,
-    #                                          world_size=world_size)
 
     if dist.is_nccl_available():
         backend = 'nccl'
     else:
         backend = 'gloo'
 
-    # from datetime import timedelta
     if 'LOCAL_WORLD_SIZE' in os.environ:
         dist.init_process_group(backend=backend)
     else:
-        dist.init_process_group(backend=backend, rank=local_rank, world_size=world_size)
+        dist.init_process_group(backend=backend, rank=local_rank, world_size=hyper_params['global_world_size'])
 
-    if world_size > 1:
+    if hyper_params['global_world_size'] > 1:
         misc.print_0(hyper_params, "contact established!")
 
     misc.print_0(hyper_params, "Multiprocessing start method: " + torch.multiprocessing.get_start_method())
-
     misc.print_0(hyper_params, "Torch version: " + torch.__version__)
     misc.print_0(hyper_params, "Torchio version: " + torchio.__version__)
     misc.print_0(hyper_params, "Numpy version: " + np.__version__)

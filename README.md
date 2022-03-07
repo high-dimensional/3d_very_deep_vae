@@ -36,9 +36,9 @@ All the Biobank niftis are loose in this folder. We have affine-aligned them to 
 
 At 128 cubed we train with a batch size of 2 or 3 on Cambridge 1, and a batch size of 1 on our V100 DGX1s. Much higher batch sizes are possible at lower resolutions!
 
-- hyper_params['CUDA_devices']
+- CUDA_devices
 
-This is a list of stringy ints, e.g. ['0'], ['0', '1'], etc. It uses zero indexing. Make sure this corresponds to what you specify on the command line - they must agree! E.g. if you intend to run on one GPU then set this to ['0'], if you intend to run on 8 GPUS then set this to [str(x) for x in range(8)], etc.
+Specify in hyper_params['CUDA_devices'] as a list of stringy ints, e.g. ['0'], ['0', '1'], etc, or on the command line (--CUDA_devices) as a list of ints. It uses zero indexing. Make sure this corresponds to what you specify on the command line - they must agree! E.g. if you intend to run on one GPU then set this to ['0'], if you intend to run on 8 GPUS then set this to [str(x) for x in range(8)], etc.
 
 - hyper_params['max_niis_to_use']
 

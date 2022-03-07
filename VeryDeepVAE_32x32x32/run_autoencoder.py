@@ -150,7 +150,6 @@ hyper_params['world_size'] = len(hyper_params['CUDA_devices'])
 hyper_params['master_addr'] = 'localhost'
 hyper_params['master_port'] = 12345
 hyper_params['workers_per_process'] = 20
-os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(hyper_params['CUDA_devices'])
 
 if __name__ == '__main__':
     torch.multiprocessing.set_start_method('spawn')

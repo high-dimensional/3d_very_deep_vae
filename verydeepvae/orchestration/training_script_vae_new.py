@@ -63,10 +63,8 @@ def main(hyper_params):
                 nifti_b1000_paths = [os.path.join(hyper_params['nifti_dwi_dir'], name) for name in nifti_b1000_filenames]
             elif hyper_params['sequence_type'] == 'flair':
                 filenames_flair = checkpoint['filenames_flair']
-                # filenames_seg = checkpoint['filenames_seg']
                 misc.print_0(hyper_params, "Number of niftis: " + str(len(filenames_flair)))
                 nifti_paths_flair = [os.path.join(hyper_params['nifti_flair_dir'], name) for name in filenames_flair]
-                # nifti_paths_seg = [os.path.join(hyper_params['nifti_flair_dir'], name) for name in filenames_seg]
                 nifti_b1000_filenames = filenames_flair
                 nifti_b1000_paths = nifti_paths_flair
         else:
@@ -264,7 +262,6 @@ def main(hyper_params):
             nib.save(nib.Nifti1Image(np.squeeze(to_plot[0][k].cpu().numpy()), np.eye(4)),
                      os.path.join(current_dir, names[k] + "_full_brain" + str(hyper_params['local_rank']) + ".nii.gz"))
 
-        # if not ('use_DDP' in hyper_params and hyper_params['use_DDP'] and hyper_params['local_rank'] > 0):
         visuals.plot_3d_recons_v2(to_plot, titles, None, current_dir,
                                   subjects_to_show=num_to_plot,
                                   hyper_params=hyper_params, prefix=str(hyper_params['local_rank']) + "_")
@@ -830,7 +827,6 @@ def main(hyper_params):
                                                   subjects_to_show=subjects_to_plot_per_process,
                                                   hyper_params=hyper_params, prefix=prefix)
                     else:
-                        # to_plot = [to_plot[0]] + [np.abs(a - to_plot[0]) for a in to_plot[1:]]
                         visuals.plot_2d(to_plot, titles, epoch, hyper_params['recon_folder'], filename=prefix,
                                         is_colour=False, num_to_plot=subjects_to_plot_per_process,
                                         norm_recons=True)
@@ -933,8 +929,3 @@ def main(hyper_params):
                     del data_dictionary_1
 
     writer.close()
-
-
-if __name__ == '__main__':
-    freeze_support()
-    main()

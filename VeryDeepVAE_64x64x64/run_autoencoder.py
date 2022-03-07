@@ -1,5 +1,4 @@
 import os
-import sys
 import argparse
 import torch
 from verydeepvae.orchestration import training_script_vae_new as training_script
@@ -15,9 +14,6 @@ hyper_params['use_tanh_output'] = True
 hyper_params['new_model'] = True
 hyper_params['use_abs_not_square'] = False
 hyper_params['plot_gradient_norms'] = True
-
-hyper_params['apply_mask_in_input_space'] = False
-hyper_params['include_mask_in_loader'] = False
 
 hyper_params['plot_recons_period'] = 1
 hyper_params['subjects_to_plot'] = 4
@@ -51,17 +47,6 @@ hyper_params['optimise_only_prior'] = False
 #hyper_params['kl_multiplier'] = 0.01
 #hyper_params['noise_injection_multiplier'] = 0.001
 hyper_params['veto_noise_injection'] = False
-hyper_params['generate_mask_for_validating'] = False
-
-hyper_params['kl_weight_auto_adjustment'] = False
-hyper_params['kl_weight_adjustment_period'] = 5
-hyper_params['kl_weight_epoch_patience'] = 0
-hyper_params['kl_weight_max_multiplier'] = 100
-hyper_params['kl_weight_min_multiplier'] = 1
-hyper_params['kl_weight_multiplier_increment'] = 1
-hyper_params['kl_weight_percentile_to_reweight'] = 25
-hyper_params['kl_weight_verbose'] = False
-
 hyper_params['verbose'] = True
 
 # hyper_params['latents_per_channel'] = [2, 7, 6, 5, 4, 3, 2, 1]
@@ -98,7 +83,7 @@ hyper_params['load_metadata'] = False
 
 hyper_params['veto_transformations'] = False
 hyper_params['apply_augmentations_to_validation_set'] = False
-hyper_params['visualise_training_pipeline_before_starting'] = True
+hyper_params['visualise_training_pipeline_before_starting'] = False
 hyper_params['nifti_flair_dir'] = '/media/robert/Data2/Biobank_FLAIRs_for_VAE/'
 hyper_params['max_niis_to_use'] = 200
 hyper_params['discard_abnormally_small_niftis'] = True
@@ -130,9 +115,9 @@ hyper_params['prob_torchvision_complex'] = 0.1
 hyper_params['prob_spiking'] = 0.1
 hyper_params['prob_anisotroper'] = 0.1
 
-hyper_params['CUDA_devices'] = [str(x) for x in range(2)]
+# hyper_params['CUDA_devices'] = [str(x) for x in range(2)]
 #hyper_params['CUDA_devices'] = ['4', '5', '6', '7']
-# hyper_params['CUDA_devices'] = ['0']
+hyper_params['CUDA_devices'] = ['0']
 
 hyper_params['current_dir'] = current_dir
 hyper_params['model_name'] = model_name
@@ -141,13 +126,12 @@ hyper_params['model_name'] = model_name
 hyper_params['use_DDP'] = True
 parser = argparse.ArgumentParser()
 parser.add_argument("--local_rank", type=int)
+parser.add_argument("--CUDA_devices", type=str)
 args = parser.parse_args()
 hyper_params['args'] = args
-hyper_params['world_size'] = len(hyper_params['CUDA_devices'])
 hyper_params['master_addr'] = 'localhost'
 hyper_params['master_port'] = 12345
 hyper_params['workers_per_process'] = 20
-os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(hyper_params['CUDA_devices'])
 
 if __name__ == '__main__':
     torch.multiprocessing.set_start_method('spawn')
