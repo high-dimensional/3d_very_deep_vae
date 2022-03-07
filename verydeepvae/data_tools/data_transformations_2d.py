@@ -1,5 +1,5 @@
 from monai import transforms as monai_trans
-import misc
+from ..misc import misc
 from clamp_by_percentile_augmentation import ClampByPercentile as ClampByPercentile
 # from NotNeeded.SimulateMissingnessAugmentation_v2 import SimulateMissingnessAugmentation
 # from NotNeeded.SimulateJSONMissingnessAugmentation import SimulateJSONMissingnessAugmentation

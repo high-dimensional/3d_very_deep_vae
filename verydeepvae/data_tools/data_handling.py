@@ -9,7 +9,7 @@ import h5py
 import sys
 import math
 import os
-import misc
+from ..misc import misc
 
 """
 These are tools related to loading, formatting and interrogating data on disk

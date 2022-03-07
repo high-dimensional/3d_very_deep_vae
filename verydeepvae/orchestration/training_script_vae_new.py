@@ -9,13 +9,13 @@ import numpy as np
 import csv
 import platform
 import socket
-from modules.data_tools import data_handling
-from modules.misc import visuals
-from modules.misc import misc
-from modules.orchestration import run_epoch_hemispheres as run_epoch
+from ..data_tools import data_handling
+from ..misc import visuals
+from ..misc import misc
+from ..orchestration import run_epoch_hemispheres as run_epoch
 from monai.data import DataLoader, Dataset
-from modules.graphs.vdeepvae_bottom_up_graph_translator import Graph as BottomUpGraph
-from modules.graphs.vdeepvae_top_down_graph_translator import Graph as TopDownGraph
+from ..graphs.vdeepvae_bottom_up_graph_translator import Graph as BottomUpGraph
+from ..graphs.vdeepvae_top_down_graph_translator import Graph as TopDownGraph
 import monai
 import torchio
 from tqdm import tqdm
@@ -24,7 +24,7 @@ from torch.utils.data import DataLoader
 import math as maths
 import torch.distributed as dist
 import nibabel as nib
-from modules.data_tools.data_transformations import create_data_transformations
+from ..data_tools.data_transformations import create_data_transformations
 
 """
 Reproducability...
@@ -332,7 +332,7 @@ def main(hyper_params):
         print("JPEG base dir: " + hyper_params['jpeg_dir'])
 
         from torchvision import transforms
-        from modules.data_tools.jpeg_dataset import JPEGDataset
+        from ..data_tools.jpeg_dataset import JPEGDataset
 
         jpeg_dir = hyper_params['jpeg_dir']
         file_names = [f for f in os.listdir(jpeg_dir) if os.path.isfile(os.path.join(jpeg_dir, f))]

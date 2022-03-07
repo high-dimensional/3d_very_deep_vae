@@ -1,13 +1,13 @@
 import torch.nn as nn
-from modules.graph_components.conv_block import ConvBlock
-from modules.graph_components.skip_block import SkipBlock
-from modules.graph_components.unpooling_block import UnPoolingBlock
-from modules.graph_components.top_down_block_simplified_translator_v2 import TopDownBlock
-from modules.misc import misc
-from modules.graph_components.tanh_block import TanhBlock
-from modules.graph_components.sigmoid_block import SigmoidBlock
-from modules.graph_components.tanh_first_n_channels_block import TanhFirstNChansOnlyBlock
-from modules.graph_components.sigmoid_first_n_channels_block import SigmoidFirstNChansOnlyBlock
+from ..graph_components.conv_block import ConvBlock
+from ..graph_components.skip_block import SkipBlock
+from ..graph_components.unpooling_block import UnPoolingBlock
+from ..graph_components.top_down_block_simplified_translator_v2 import TopDownBlock
+from ..misc import misc
+from ..graph_components.tanh_block import TanhBlock
+from ..graph_components.sigmoid_block import SigmoidBlock
+from ..graph_components.tanh_first_n_channels_block import TanhFirstNChansOnlyBlock
+from ..graph_components.sigmoid_first_n_channels_block import SigmoidFirstNChansOnlyBlock
 
 
 class Graph:

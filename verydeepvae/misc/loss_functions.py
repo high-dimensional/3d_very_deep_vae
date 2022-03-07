@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import matplotlib as mpl
 mpl.use("AGG")
-import misc
+from . import misc
 
 
 """
