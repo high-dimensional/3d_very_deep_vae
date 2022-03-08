@@ -23,15 +23,37 @@ from ..data_tools.data_transformations import create_data_transformations
 Reproducability...
 """
 random_seed = 42
-torch.backends.cudnn.deterministic = True
 np.random.seed(random_seed)
 random.seed(random_seed)
+# torch.manual_seed(random_seed) # Different workers end up with the same seed
+torch.backends.cudnn.deterministic = True
+# torch.backends.cudnn.benchmark = False
 
 
 def main(hyper_params):
     """
     This script coordinates everything!
     """
+
+    # """
+    # Reproducability...
+    # Implement this: https://albertcthomas.github.io/good-practices-random-number-generators/
+    # """
+    # if hasattr(hyper_params['args'], 'random_seed') and hyper_params['args'].random_seed is not None:
+    #     np.random.seed(hyper_params['args'].random_seed)
+    #     random.seed(hyper_params['args'].random_seed)
+    #     torch.manual_seed(hyper_params['args'].random_seed)
+    # elif 'random_seed' in hyper_params:
+    #     np.random.seed(hyper_params['random_seed'])
+    #     random.seed(hyper_params['random_seed'])
+    #     torch.manual_seed(hyper_params['random_seed'])
+    # else:
+    #     np.random.seed(42)
+    #     random.seed(42)
+    #     torch.manual_seed(42)
+    #
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = False
 
     hyper_params = environment.setup_environment(hyper_params)
 

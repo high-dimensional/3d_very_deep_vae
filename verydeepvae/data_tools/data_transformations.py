@@ -5,6 +5,7 @@ from torchio import transforms as torchio_trans
 from .random_anisotropiser_augmentation import Anisotropiser
 from .clamp_by_percentile_augmentation import ClampByPercentile as ClampByPercentile
 from .crop_nii_by_given_amount import CropNIIByGivenAmount as CropNIIByGivenAmount
+from .random_registered_3d_haircut import ThreeDHaircut
 
 
 def create_data_transformations(hyper_params, device, keys=None, clamp_percentiles=None):
@@ -66,6 +67,7 @@ def create_data_transformations(hyper_params, device, keys=None, clamp_percentil
             hyper_params['three_d_deform_magnitudes'] = (3, 5)
             hyper_params['histogram_shift_control_points'] = (10, 15)
             hyper_params['anisotroper_ranges'] = [0.8, 0.95]
+            hyper_params['haircut_ranges'] = [3, 3, 3]
             hyper_params['prob_affine'] = 0.1
             hyper_params['prob_torchvision_simple'] = 0.1
             hyper_params['prob_three_d_elastic'] = 0.1
@@ -73,6 +75,7 @@ def create_data_transformations(hyper_params, device, keys=None, clamp_percentil
             hyper_params['prob_torchvision_complex'] = 0.1
             hyper_params['prob_spiking'] = 0.1
             hyper_params['prob_anisotroper'] = 0.1
+            hyper_params['prob_haircut'] = 0.1
 
         min_small_crop_size = hyper_params['min_small_crop_size']
         rot_angle_in_rads = hyper_params['rot_angle_in_rads']
@@ -83,6 +86,7 @@ def create_data_transformations(hyper_params, device, keys=None, clamp_percentil
         three_d_deform_magnitudes = hyper_params['three_d_deform_magnitudes']
         histogram_shift_control_points = hyper_params['histogram_shift_control_points']
         anisotroper_ranges = hyper_params['anisotroper_ranges']
+        haircut_ranges = hyper_params['haircut_ranges']
         prob_affine = hyper_params['prob_affine']
         prob_torchvision_simple = hyper_params['prob_torchvision_simple']
         prob_three_d_elastic = hyper_params['prob_three_d_elastic']
@@ -90,9 +94,9 @@ def create_data_transformations(hyper_params, device, keys=None, clamp_percentil
         prob_torchvision_complex = hyper_params['prob_torchvision_complex']
         prob_spiking = hyper_params['prob_spiking']
         prob_anisotroper = hyper_params['prob_anisotroper']
+        prob_haircut = hyper_params['prob_haircut']
 
-        train_transforms = [monai_trans.LoadImaged(keys=keys),
-                            monai_trans.AddChanneld(keys=keys)]
+        train_transforms = [monai_trans.LoadImaged(keys=keys), monai_trans.AddChanneld(keys=keys)]
 
         if 'crop_nii_at_loadtime' in hyper_params:
             print("Cropping an padding on the basis of the voplume ocupied by Biobank T1s at 181x217x181")
@@ -102,8 +106,7 @@ def create_data_transformations(hyper_params, device, keys=None, clamp_percentil
         train_transforms += resize_block
 
         train_transforms += [Anisotropiser(keys=keys, scale_range=anisotroper_ranges, prob=prob_anisotroper),
-                             ThreeDHaircut(keys=keys, range=haircut_ranges, prob=prob_haircut)
-                             ]
+                             ThreeDHaircut(keys=keys, range=haircut_ranges, prob=prob_haircut)]
 
         if misc.key_is_true(hyper_params, 'use_tanh_output') or misc.key_is_true(hyper_params, 'use_sigmoid_output'):
             train_transforms += [ClampByPercentile(keys=keys,

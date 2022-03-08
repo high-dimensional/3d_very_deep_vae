@@ -1,8 +1,8 @@
 # Some notes
 
-All the code is in 'SharedModules'. To create a new autoencoder just create a folder alongside SharedModules and put a run_autoencoder.py file in it, just like the ones I have included (or just use the ones I have included!). The only difference between the 3 models I have included is the 'nii_target_shape' argument, and the number of layers (see 'Layer definitions' below): the 64^3 model has one more layer than the 32^3 model, and the 128^3 model has one more layer than that).
+To create a new autoencoder just create a folder alongside verydeepvae and put a run_autoencoder.py file in it, just like the ones I have included (or just use the ones I have included!). The only difference between the 3 models I have included is the 'nii_target_shape' argument, and the number of layers (see 'Layer definitions' below): the 64^3 model has one more layer than the 32^3 model, and the 128^3 model has one more layer than that).
 
-The model defined in VeryDeepVAE_128x128x128 uses between 31.9GB, so should fit on a 32GB card! Changing the 7 to a 6 in hyper_params['latents_per_channel'] should make it fit comfortably in 32GB if that becomes a problem.
+The model defined in VeryDeepVAE_128x128x128 uses 31.9GB, so should fit on a 32GB card! Changing the 7 to a 6 in hyper_params['latents_per_channel'] should make it fit comfortably in 32GB if that becomes a problem.
 
 - To run on one GPU (see the point below about hyper_params['CUDA_devices']):
  
@@ -18,9 +18,9 @@ python -m torch.distributed.run --nnodes=1 --nproc_per_node=8 --rdzv_backend=c10
 
 - To run on two nodes, each with 8 cards
 
-python -m torch.distributed.run --nproc_per_node=8 --master_addr=123.45.678.90 --master_port=1234 --nnodes=2 --node_rank=0 run_autoencoder.py
+On node 0) python -m torch.distributed.run --nproc_per_node=8 --master_addr=123.45.678.90 --master_port=1234 --nnodes=2 --node_rank=0 run_autoencoder.py
 
-python -m torch.distributed.run --nproc_per_node=8 --master_addr=123.45.678.90 --master_port=1234 --nnodes=2 --node_rank=1 run_autoencoder.py
+On node 1) python -m torch.distributed.run --nproc_per_node=8 --master_addr=123.45.678.90 --master_port=1234 --nnodes=2 --node_rank=1 run_autoencoder.py
 
 # To kill zombies
 
