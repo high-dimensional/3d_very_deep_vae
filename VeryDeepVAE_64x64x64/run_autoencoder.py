@@ -6,7 +6,7 @@ from verydeepvae.orchestration import training_script_vae_new as training_script
 current_dir = os.path.dirname(os.path.realpath('__file__'))
 model_name = os.path.split(current_dir)[-1]
 
-hyper_params = {'total_epochs': 100000, 'batch_size': 2, 'l2_reg_coeff': 1e-4,
+hyper_params = {'total_epochs': 100000, 'batch_size': 10, 'l2_reg_coeff': 1e-4,
                 'learning_rate': 1e-3, 'train_frac': 0.95, 'half_precision': False, 'print_model': False,
                 'current_dir': current_dir, 'model_name': model_name}
 
@@ -16,7 +16,7 @@ hyper_params['use_abs_not_square'] = False
 hyper_params['plot_gradient_norms'] = True
 
 hyper_params['plot_recons_period'] = 1
-hyper_params['subjects_to_plot'] = 4
+hyper_params['subjects_to_plot'] = 10
 hyper_params['validation_period'] = 1
 hyper_params['save_period'] = 1
 hyper_params['base_recons_on_train_loader'] = False
@@ -83,8 +83,9 @@ hyper_params['load_metadata'] = False
 
 hyper_params['veto_transformations'] = False
 hyper_params['apply_augmentations_to_validation_set'] = False
-hyper_params['visualise_training_pipeline_before_starting'] = False
-hyper_params['nifti_flair_dir'] = '/media/robert/Data2/Biobank_FLAIRs_for_VAE/'
+hyper_params['visualise_training_pipeline_before_starting'] = True
+# hyper_params['nifti_flair_dir'] = '/media/robert/Data2/Biobank_FLAIRs_for_VAE/'
+hyper_params['nifti_flair_dir'] = '/media/robert/Data2/T1_FLAIR_seg_triples/'
 hyper_params['max_niis_to_use'] = 200
 hyper_params['discard_abnormally_small_niftis'] = True
 hyper_params['affine_and_elastic_on_gpu'] = False
@@ -98,9 +99,9 @@ hyper_params['tensorboard_dir'] = '/home/robert/temp/Torch_TensorBoard/'
 # hyper_params['checkpoint_folder'] = '/local_dir/Torch_Checkpoints/'
 # hyper_params['tensorboard_dir'] = '/local_dir/Torch_TensorBoard/'
 
-# hyper_params['CUDA_devices'] = [str(x) for x in range(2)]
+hyper_params['CUDA_devices'] = [str(x) for x in range(2)]
 #hyper_params['CUDA_devices'] = ['4', '5', '6', '7']
-hyper_params['CUDA_devices'] = ['0']
+# hyper_params['CUDA_devices'] = ['0']
 
 hyper_params['current_dir'] = current_dir
 hyper_params['model_name'] = model_name

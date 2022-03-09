@@ -186,7 +186,6 @@ def print_0(hyper_params, x, end=None):
     if hyper_params['local_rank'] > 0:  # dist.get_rank() > 0:
         pass
     else:
-        # if hyper_params['local_rank'] == np.min(devs):
         if end is not None:
             print(x, end=end, flush=True)
         else:

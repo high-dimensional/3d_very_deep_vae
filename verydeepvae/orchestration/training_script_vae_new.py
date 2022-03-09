@@ -18,16 +18,7 @@ from torch.utils.data import DataLoader
 import math as maths
 import nibabel as nib
 from ..data_tools.data_transformations import create_data_transformations
-
-"""
-Reproducability...
-"""
-random_seed = 42
-np.random.seed(random_seed)
-random.seed(random_seed)
-# torch.manual_seed(random_seed) # Different workers end up with the same seed
-torch.backends.cudnn.deterministic = True
-# torch.backends.cudnn.benchmark = False
+import monai
 
 
 def main(hyper_params):
@@ -35,25 +26,36 @@ def main(hyper_params):
     This script coordinates everything!
     """
 
-    # """
-    # Reproducability...
-    # Implement this: https://albertcthomas.github.io/good-practices-random-number-generators/
-    # """
-    # if hasattr(hyper_params['args'], 'random_seed') and hyper_params['args'].random_seed is not None:
-    #     np.random.seed(hyper_params['args'].random_seed)
-    #     random.seed(hyper_params['args'].random_seed)
-    #     torch.manual_seed(hyper_params['args'].random_seed)
-    # elif 'random_seed' in hyper_params:
-    #     np.random.seed(hyper_params['random_seed'])
-    #     random.seed(hyper_params['random_seed'])
-    #     torch.manual_seed(hyper_params['random_seed'])
-    # else:
-    #     np.random.seed(42)
-    #     random.seed(42)
-    #     torch.manual_seed(42)
-    #
-    # torch.backends.cudnn.deterministic = True
-    # torch.backends.cudnn.benchmark = False
+    """
+    Reproducability...
+    Take another look at this: https://albertcthomas.github.io/good-practices-random-number-generators/
+    
+    monai.utils.set_determinism(seed=True) results in each process applying the same augmentation functions, which is
+    wrong but not fatal...
+    
+    Setting torch.manual_seed doesn't seem to make a difference
+    """
+    if hasattr(hyper_params['args'], 'random_seed') and hyper_params['args'].random_seed is not None:
+        np.random.seed(hyper_params['args'].random_seed)
+        random.seed(hyper_params['args'].random_seed)
+        # torch.manual_seed(hyper_params['args'].random_seed)
+        monai.utils.set_determinism(seed=hyper_params['args'].random_seed, additional_settings=None)
+
+    elif 'random_seed' in hyper_params:
+        np.random.seed(hyper_params['random_seed'])
+        random.seed(hyper_params['random_seed'])
+        # torch.manual_seed(hyper_params['random_seed'])
+        monai.utils.set_determinism(seed=hyper_params['random_seed'], additional_settings=None)
+
+    else:
+        np.random.seed(666)
+        random.seed(666)
+        # torch.manual_seed(666)
+        monai.utils.set_determinism(seed=666, additional_settings=None)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True)
 
     hyper_params = environment.setup_environment(hyper_params)
 
@@ -172,10 +174,6 @@ def main(hyper_params):
         dataset_val = Dataset(data=val_files, transform=val_transforms)
     
         pin_memory = True
-        loader_train = DataLoader(dataset_train, batch_size=hyper_params['batch_size'], shuffle=True, drop_last=True,
-                                  num_workers=hyper_params['workers_per_process'], pin_memory=pin_memory)
-        misc.print_0(hyper_params, "WARNING: dropping last on val set!")
-    
         cardinality_train = len(dataset_train)
         cardinality_val = len(dataset_val)
         hyper_params['cardinality_train'] = cardinality_train
@@ -269,6 +267,14 @@ def main(hyper_params):
     if 'visualise_training_pipeline_before_starting' in hyper_params and \
             hyper_params['visualise_training_pipeline_before_starting']:
         misc.print_0(hyper_params, "Plotting pipeline before training")
+
+        sampler_train = DistributedSampler(dataset_train, num_replicas=hyper_params['global_world_size'],
+                                           rank=hyper_params['global_rank'], shuffle=True, drop_last=True)
+        loader_train = DataLoader(dataset_train, sampler=sampler_train, batch_size=hyper_params['batch_size'],
+                                  drop_last=True, num_workers=hyper_params['workers_per_process'],
+                                  pin_memory=pin_memory)
+        sampler_train.set_epoch(0)
+
         check_data = next(iter(loader_train))
         paths = check_data['full_brain_meta_dict']['filename_or_obj']
         names = [f.split('/')[-1] for f in paths]
@@ -289,8 +295,6 @@ def main(hyper_params):
                                   subjects_to_show=num_to_plot,
                                   hyper_params=hyper_params, prefix=str(hyper_params['local_rank']) + "_")
 
-        misc.print_0(hyper_params, "")
-
     dataset = [cardinality_train, dataset_train, cardinality_val, dataset_val, data_shape, is_3d, is_colour]
 
     bottom_up_graph_1 = BottomUpGraph(hyper_params=hyper_params, device=hyper_params['device'], input_channels=1)
@@ -301,7 +305,6 @@ def main(hyper_params):
     sampler_val = DistributedSampler(dataset_val, num_replicas=hyper_params['global_world_size'],
                                      rank=hyper_params['global_rank'], shuffle=False, drop_last=True)
 
-    pin_memory = True
     loader_train = DataLoader(dataset_train, sampler=sampler_train, batch_size=hyper_params['batch_size'],
                               drop_last=True, num_workers=hyper_params['workers_per_process'], pin_memory=pin_memory)
     loader_val = DataLoader(dataset_val, sampler=sampler_val, batch_size=hyper_params['batch_size'], drop_last=False,
