@@ -155,8 +155,7 @@ def create_data_transformations(hyper_params, device, keys=None, clamp_percentil
                                                      scale_range=scale_range,
                                                      spatial_size=None,
                                                      padding_mode="border",
-                                                     device=device if hyper_params[
-                                                         'affine_and_elastic_on_gpu'] else None,
+                                                     device=device if misc.key_is_true(hyper_params, 'affine_and_elastic_on_gpu') else None,
                                                      as_tensor_output=False),
                              monai_trans.RandSpatialCropd(keys=keys,
                                                           roi_size=min_small_crop_size, random_center=True,
@@ -171,8 +170,7 @@ def create_data_transformations(hyper_params, device, keys=None, clamp_percentil
                                                         scale_range=None,
                                                         spatial_size=None,
                                                         padding_mode="border",
-                                                        device=device if hyper_params[
-                                                            'affine_and_elastic_on_gpu'] else None,
+                                                        device=device if misc.key_is_true(hyper_params, 'affine_and_elastic_on_gpu') else None,
                                                         as_tensor_output=False)
                              ]
 

@@ -33,9 +33,6 @@ hyper_params['gradient_skipping_value'] = 1000000000000
 
 hyper_params['likelihood'] = 'Gaussian'
 hyper_params['predict_x_var'] = True
-# hyper_params['x_std_l2_penalty'] = 1e-3
-hyper_params['model_dwi_given_t1'] = False
-hyper_params['model_b1000_given_b10'] = False
 
 hyper_params['predict_x_var_with_sigmoid'] = True
 hyper_params['variance_hidden_clamp_bounds'] = [0.001, 1]
@@ -43,15 +40,6 @@ hyper_params['variance_output_clamp_bounds'] = [0.01, 1]
 hyper_params['use_precision_reweighting'] = False
 hyper_params['separate_hidden_loc_scale_convs'] = False
 hyper_params['separate_output_loc_scale_convs'] = False
-hyper_params['optimise_encoder'] = True
-hyper_params['optimise_prior'] = True
-hyper_params['optimise_xmu'] = True
-hyper_params['optimise_xvar'] = True
-hyper_params['optimise_only_prior'] = False
-#hyper_params['kl_multiplier'] = 0.01
-#hyper_params['noise_injection_multiplier'] = 0.001
-hyper_params['veto_noise_injection'] = False
-hyper_params['generate_mask_for_validating'] = False
 hyper_params['verbose'] = True
 
 hyper_params['latents_per_channel'] = [2, 7, 6, 5, 4, 3, 2, 1]
@@ -73,13 +61,7 @@ hyper_params['veto_batch_norm'] = True
 hyper_params['latents_to_use'] = [True for _ in range(sum(hyper_params['latents_per_channel']))]
 hyper_params['latents_to_optimise'] = [True for _ in range(sum(hyper_params['latents_per_channel']))]
 
-hyper_params['conditional_model'] = False
-hyper_params['delete_hemispheres'] = False
-hyper_params['leave_random_subvolumes'] = False
-hyper_params['delete_random_subvolumes'] = False
 hyper_params['sequence_type'] = 'flair'
-hyper_params['mask_out_wmls_in_likelihood'] = False
-hyper_params['load_metadata'] = False
 
 hyper_params['veto_transformations'] = False
 hyper_params['apply_augmentations_to_validation_set'] = False
@@ -87,7 +69,6 @@ hyper_params['visualise_training_pipeline_before_starting'] = True
 hyper_params['nifti_flair_dir'] = '/media/robert/Data2/Biobank_FLAIRs_for_VAE/'
 # hyper_params['max_niis_to_use'] = 100
 hyper_params['discard_abnormally_small_niftis'] = True
-hyper_params['affine_and_elastic_on_gpu'] = False
 hyper_params['use_nii_data'] = True
 hyper_params['nii_target_shape'] = [128, 128, 128]
 hyper_params['nifti_standardise'] = True

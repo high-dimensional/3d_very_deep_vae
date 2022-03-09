@@ -112,7 +112,7 @@ def main(hyper_params):
 
             eids = [f.split('_')[0] for f in filenames_flair]
     
-            if hyper_params['load_metadata']:
+            if misc.key_is_true(hyper_params, 'load_metadata'):
                 misc.print_0(hyper_params, "Loading metadata and partitioning data into normal/abnormal")
                 filename = hyper_params['biobank_eids_dir'] + 'biobank_eids_with_white_matter_hyperintensities.csv'
                 eids_with_lesions = []
@@ -334,19 +334,19 @@ def main(hyper_params):
 
     params = []
 
-    if hyper_params['optimise_encoder']:
+    if not ('optimise_encoder' in hyper_params and not hyper_params['optimise_encoder']):
         misc.print_0(hyper_params, "Optimising encoder")
         params += list(bottom_up_graph_1.model.parameters())
 
-    if hyper_params['optimise_xmu']:
+    if not ('optimise_xmu' in hyper_params and not hyper_params['optimise_xmu']):
         params += list(top_down_graph.x_mu.parameters())
 
     if hyper_params['likelihood'] == 'Gaussian' and hyper_params['separate_output_loc_scale_convs'] and \
             hyper_params['predict_x_var']:
-        if hyper_params['optimise_xvar']:
+        if not ('optimise_xvar' in hyper_params and not hyper_params['optimise_xvar']):
             params += list(top_down_graph.x_var.parameters())
 
-    if hyper_params['optimise_only_prior']:
+    if misc.key_is_true(hyper_params, 'optimise_only_prior'):
         misc.print_0(hyper_params, "Optimising only the prior in the decoder")
         params_sans_prior_predictors = []
         params_prior_predictors = []
@@ -358,21 +358,22 @@ def main(hyper_params):
         params += params_prior_predictors
         misc.print_0(hyper_params, "Parameters in prior being optimised: " +
                      str(misc.count_parameters(params_prior_predictors)))
-    elif hyper_params['optimise_prior']:
-        misc.print_0(hyper_params, "Optimising the prior")
-        params += list(top_down_graph.latents.parameters())
     else:
-        misc.print_0(hyper_params, "Not optimising the prior")
-        params_sans_prior_predictors = []
-        params_prior_predictors = []
-        for name, param in top_down_graph.latents.named_parameters():
-            if 'convs_p' in name:
-                params_prior_predictors.append(param)
-            else:
-                params_sans_prior_predictors.append(param)
-        params += params_sans_prior_predictors
-        misc.print_0(hyper_params, "Ommitted parameters in prior: " +
-                     str(misc.count_parameters(params_prior_predictors)))
+        if not ('optimise_prior' in hyper_params and not hyper_params['optimise_prior']):
+            misc.print_0(hyper_params, "Optimising the prior")
+            params += list(top_down_graph.latents.parameters())
+        else:
+            misc.print_0(hyper_params, "Not optimising the prior")
+            params_sans_prior_predictors = []
+            params_prior_predictors = []
+            for name, param in top_down_graph.latents.named_parameters():
+                if 'convs_p' in name:
+                    params_prior_predictors.append(param)
+                else:
+                    params_sans_prior_predictors.append(param)
+            params += params_sans_prior_predictors
+            misc.print_0(hyper_params, "Ommitted parameters in prior: " +
+                         str(misc.count_parameters(params_prior_predictors)))
 
     misc.print_0(hyper_params, "Parameters in bottom-up graph 1: " + str(
         misc.count_unique_parameters(list(bottom_up_graph_1.model.named_parameters()))))

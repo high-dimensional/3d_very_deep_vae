@@ -88,7 +88,7 @@ class TopDownBlock(nn.Module):
         else:
             self.shared_group_ops = None
 
-        if 'veto_noise_injection' in self.hyper_params and self.hyper_params["veto_noise_injection"]:
+        if misc.key_is_true(self.hyper_params, "veto_noise_injection"):
             self.inject_noise = False
         else:
             self.inject_noise = True

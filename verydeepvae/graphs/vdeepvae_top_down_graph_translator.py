@@ -31,6 +31,8 @@ class Graph:
         else:
             self.conditional_prior = False
 
+        veto_noise_injection = misc.key_is_true(hyper_params, "veto_noise_injection")
+
         ###########################################################################
         ###########################################################################
         # New code for custom latent sizes
@@ -132,7 +134,7 @@ class Graph:
                                        variance_bounds=hyper_params['variance_hidden_clamp_bounds'],
                                        precision_reweighting=hyper_params['use_precision_reweighting'],
                                        separate_loc_scale_convs=hyper_params['separate_hidden_loc_scale_convs'],
-                                       veto_noise_injection=hyper_params['veto_noise_injection'],
+                                       veto_noise_injection=veto_noise_injection,
                                        hidden_kernel_size=hidden_kernel_size,
                                        hyper_params=hyper_params,
                                        index_of_latent=index_of_latent,
@@ -184,7 +186,7 @@ class Graph:
                                                variance_bounds=hyper_params['variance_hidden_clamp_bounds'],
                                                precision_reweighting=hyper_params['use_precision_reweighting'],
                                                separate_loc_scale_convs=hyper_params['separate_hidden_loc_scale_convs'],
-                                               veto_noise_injection=hyper_params['veto_noise_injection'],
+                                               veto_noise_injection=veto_noise_injection,
                                                hidden_kernel_size=hidden_kernel_size,
                                                shared_group_ops=shared_group_ops,
                                                hyper_params=hyper_params,
@@ -317,7 +319,7 @@ class Graph:
                                                    variance_bounds=hyper_params['variance_hidden_clamp_bounds'],
                                                    precision_reweighting=hyper_params['use_precision_reweighting'],
                                                    separate_loc_scale_convs=hyper_params['separate_hidden_loc_scale_convs'],
-                                                   veto_noise_injection=hyper_params['veto_noise_injection'],
+                                                   veto_noise_injection=veto_noise_injection,
                                                    hyper_params=hyper_params,
                                                    index_of_latent=index_of_latent,
                                                    hidden_kernel_size=hidden_kernel_size,
@@ -368,7 +370,7 @@ class Graph:
                                                        precision_reweighting=hyper_params['use_precision_reweighting'],
                                                        separate_loc_scale_convs=hyper_params['separate_hidden_loc_scale_convs'],
                                                        shared_group_ops=shared_group_ops,
-                                                       veto_noise_injection=hyper_params['veto_noise_injection'],
+                                                       veto_noise_injection=veto_noise_injection,
                                                        hyper_params=hyper_params,
                                                        index_of_latent=index_of_latent,
                                                        hidden_kernel_size=hidden_kernel_size,

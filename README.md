@@ -38,7 +38,7 @@ At 128 cubed we train with a batch size of 2 or 3 on Cambridge 1, and a batch si
 
 - CUDA_devices
 
-Specify in hyper_params['CUDA_devices'] as a list of stringy ints, e.g. ['0'], ['0', '1'], etc, or on the command line (--CUDA_devices) as a list of ints. It uses zero indexing. Make sure this corresponds to what you specify on the command line - they must agree! E.g. if you intend to run on one GPU then set this to ['0'], if you intend to run on 8 GPUS then set this to [str(x) for x in range(8)], etc.
+Specify in hyper_params['CUDA_devices'] as a list of stringy ints, e.g. ['0'], ['0', '1'], etc, or on the command line (--CUDA_devices) as comma-separated ints. Use zero indexing. Make sure this corresponds to what you specify on the command line - they must agree! E.g. if you intend to run on one GPU then set this to ['0'], if you intend to run on 8 GPUS then set this to [str(x) for x in range(8)], etc.
 
 - hyper_params['max_niis_to_use']
 
@@ -54,10 +54,14 @@ etc
 
 - Layer definitions: e.g.,
 
-hyper_params['latents_per_channel'] = [2, 7, 6, 5, 4, 3, 2, 1]  # They go high res -> low res (i.e. 1 latent at 1x1x1 res, and 2 latents at input res)
+hyper_params['latents_per_channel'] = [2, 7, 6, 5, 4, 3, 2, 1]  # They go high res to low res (i.e., reading right to left, 1 latent at 1x1x1 res, 2 at 2x2x2 res, 3 at 4x4x4 res, ..., 2 latents at the input res)
+
 hyper_params['channels_per_latent'] = [20, 20, 20, 20, 20, 20, 20, 200]  # They go high res -> low res
+
 hyper_params['channels'] = [20, 40, 60, 80, 100, 120, 140, 160]  # They go high res -> low res
+
 hyper_params['kernel_sizes_bottom_up'] = [3, 3, 3, 3, 3, 3, 2, 1]  # They go high res -> low res
+
 hyper_params['kernel_sizes_top_down'] = [3, 3, 3, 3, 3, 3, 2, 1]  # They go high res -> low res
 
 If the resolution is 2^k then these lists should all have k+1 elements: each entry defines a convolution block and after each of these we downsample by x2 in each spatial dim on the way up and upsample by x2 in each spatial dim on the way back down. This version of the code has not been tested when these lists have fewer than k+1 elements - you have been warned!
