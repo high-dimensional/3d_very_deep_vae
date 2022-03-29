@@ -18,13 +18,15 @@ install_requires = [
     "tqdm==4.62.3",
 ]
 
+# CUDA builds of torch & torchvision packages are required therefore we install directly
+# from platform dependent pre-built wheels available at https://download.pytorch.org
+# These are only available for 64-bit Linux and Windows systems
 CUDA_VERSION = "113"
-
 for os, machine in (('linux', 'x86_64'), ('win', 'amd64')):
     for python_version in ('3.7', '3.8', '3.9'):
         base_url = f'https://download.pytorch.org/whl/cu{CUDA_VERSION}'
-        abi = f'c{python_version[0]}{python_version[-1]}'
-        abi_2 = abi if python_version == '3.7' else f'{abi}m'
+        abi = f'cp{python_version[0]}{python_version[-1]}'
+        abi_2 = abi if python_version != '3.7' else f'{abi}m'
         local_version_label = f'cu{CUDA_VERSION}-{abi}-{abi_2}-{os}_{machine}'
         environment_marker = (
             f'implementation_name == "cpython" '
