@@ -8,7 +8,7 @@ install_requires = [
     "h5py==3.5.0",
     "matplotlib==3.4.3",
     "monai==0.7.0",
-    "nibabel==3.2.1"
+    "nibabel==3.2.1",
     "numpy==1.21.3",
     "Pillow==8.4.0",
     "scipy==1.7.1",
