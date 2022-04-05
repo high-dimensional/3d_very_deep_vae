@@ -35,24 +35,11 @@ def main(hyper_params):
     
     Setting torch.manual_seed doesn't seem to make a difference
     """
-    if hasattr(hyper_params['args'], 'random_seed') and hyper_params['args'].random_seed is not None:
-        np.random.seed(hyper_params['args'].random_seed)
-        random.seed(hyper_params['args'].random_seed)
-        # torch.manual_seed(hyper_params['args'].random_seed)
-        monai.utils.set_determinism(seed=hyper_params['args'].random_seed, additional_settings=None)
-
-    elif 'random_seed' in hyper_params:
-        np.random.seed(hyper_params['random_seed'])
-        random.seed(hyper_params['random_seed'])
-        # torch.manual_seed(hyper_params['random_seed'])
-        monai.utils.set_determinism(seed=hyper_params['random_seed'], additional_settings=None)
-
-    else:
-        np.random.seed(666)
-        random.seed(666)
-        # torch.manual_seed(666)
-        monai.utils.set_determinism(seed=666, additional_settings=None)
-
+    random_seed = hyper_params.get('random_seed', 666)
+    np.random.seed(random_seed)
+    random.seed(random_seed)
+    # torch.manual_seed(random_seed)
+    monai.utils.set_determinism(seed=random_seed, additional_settings=None)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     torch.use_deterministic_algorithms(True)
@@ -88,27 +75,18 @@ def main(hyper_params):
             elif hyper_params['sequence_type'] == 'flair':
                 filenames_flair = checkpoint['filenames_flair']
                 misc.print_0(hyper_params, "Number of niftis: " + str(len(filenames_flair)))
-                nifti_paths_flair = [os.path.join(hyper_params['nifti_flair_dir'], name) for name in filenames_flair]
+                nifti_paths_flair = [hyper_params['nifti_flair_dir'] / name for name in filenames_flair]
                 nifti_b1000_filenames = filenames_flair
                 nifti_b1000_paths = nifti_paths_flair
         else:
             misc.print_0(hyper_params, "Sequence type: " + hyper_params['sequence_type'])
-
-            if hasattr(hyper_params['args'], 'nifti_flair_dir') and hyper_params['args'].nifti_flair_dir is not None:
-                hyper_params['nifti_flair_dir'] = hyper_params['args'].nifti_flair_dir
-                misc.print_0(hyper_params, "nifti_flair_dir found in input args: " + hyper_params['nifti_flair_dir'])
-            elif 'nifti_flair_dir' in hyper_params:
-                misc.print_0(hyper_params, "nifti_flair_dir found in hyper_params: " + hyper_params['nifti_flair_dir'])
-            else:
-                misc.print_0(hyper_params, "nifti_flair_dir not found. Quitting.")
-                quit()
-
+            misc.print_0(hyper_params, f"nifti_flair_dir found in hyper_params: {hyper_params['nifti_flair_dir']}")
             filenames = os.listdir(hyper_params['nifti_flair_dir'])
             filenames = [f for f in filenames if not f.startswith('.')]  # Remove hidden files
             filenames = [f for f in filenames if '_20253_2_0.zip' in f]  # Remove hidden files
             filenames_flair = [f for f in filenames if '_flair' in f]
     
-            nifti_paths_flair = [os.path.join(hyper_params['nifti_flair_dir'], name) for name in filenames_flair]
+            nifti_paths_flair = [hyper_params['nifti_flair_dir'] / name for name in filenames_flair]
 
             eids = [f.split('_')[0] for f in filenames_flair]
     
@@ -142,8 +120,8 @@ def main(hyper_params):
                 filenames_flair = [f for f in filenames_flair if f.split('_')[0] in eids_normal]
                 filenames_seg = [f.replace('_flair.nii', '_seg.nii') for f in filenames_flair]
     
-                nifti_paths_flair = [os.path.join(hyper_params['nifti_flair_dir'], name) for name in filenames_flair]
-                nifti_paths_seg = [os.path.join(hyper_params['nifti_flair_dir'], name) for name in filenames_seg]
+                nifti_paths_flair = [hyper_params['nifti_flair_dir'] / name for name in filenames_flair]
+                nifti_paths_seg = [hyper_params['nifti_flair_dir'] / name for name in filenames_seg]
     
             nifti_b1000_filenames = filenames_flair
             nifti_b1000_paths = nifti_paths_flair
