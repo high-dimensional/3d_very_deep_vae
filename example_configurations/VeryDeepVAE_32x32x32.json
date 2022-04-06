@@ -1,6 +1,6 @@
 {
     "total_epochs": 10, 
-    "batch_size": 50, 
+    "batch_size": 64, 
     "l2_reg_coeff": 1e-4,
     "learning_rate": 1e-3, 
     "train_frac": 0.95, 
@@ -60,8 +60,5 @@
     "nifti_standardise": true,
     "shuffle_niftis": false,
     "save_recons_to_mat": false,
-    "use_DDP": true,
-    "master_addr": "localhost",
-    "master_port": 12345,
-    "workers_per_process": 1
+    "use_DDP": true
 }

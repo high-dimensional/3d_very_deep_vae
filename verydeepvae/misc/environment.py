@@ -75,7 +75,7 @@ def setup_environment(hyper_params):
         hyper_params['global_world_size'] = hyper_params['world_size']
         hyper_params['global_rank'] = hyper_params['local_rank']
 
-    os.environ['OMP_NUM_THREADS'] = str(hyper_params['workers_per_process'])
+    os.environ['OMP_NUM_THREADS'] = str(hyper_params['threads_per_rank'])
     os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(hyper_params['CUDA_devices'])
 
     hyper_params['host_name'] = socket.gethostname()
@@ -89,13 +89,8 @@ def setup_environment(hyper_params):
     if local_rank > 0:
         hyper_params['verbose'] = False
 
-    if 'threads_per_rank' in hyper_params:
-        torch.set_num_threads(hyper_params['threads_per_rank'])
-        misc.print_0(hyper_params, f"Setting number of threads to {hyper_params['threads_per_rank']}")
-    else:
-        misc.print_0(hyper_params, "Setting number of threads to 8")
-        torch.set_num_threads(8)
-
+    torch.set_num_threads(hyper_params['threads_per_rank'])
+    misc.print_0(hyper_params, f"Setting number of threads to {hyper_params['threads_per_rank']}")
     misc.print_0(hyper_params, "NB: Only output from the rank_0 process is displayed")
     misc.print_0(hyper_params, "Master IP: " + str(hyper_params['master_addr']))
     misc.print_0(hyper_params, "Master Port: " + str(hyper_params['master_port']))

@@ -12,13 +12,14 @@ from verydeepvae.orchestration import training_script_vae_new as training_script
 def parse_command_line_arguments() -> argparse.Namespace:
     """Parse command line arguments."""    
     parser = argparse.ArgumentParser(
-        "Train variational autoencoder model on neuroimaging data"
+        "Train variational autoencoder model on neuroimaging data",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
         "--json_config_file", 
         type=Path,
         required=True,
-        help="Path to JSON file specifying model / run hyperparameters"
+        help="Path to JSON file specifying model and run hyperparameters"
     )
     parser.add_argument(
         "--nifti_flair_dir", 
@@ -45,16 +46,48 @@ def parse_command_line_arguments() -> argparse.Namespace:
         default=["0"],
         help="Device indices (zero-based) for GPUs to use when training model"
     )
+    parser.add_argument(
+        "--master_addr",
+        type=str,
+        default="127.0.0.1",
+        help="IP address of rank 0 node when running on multiple nodes in parallel"
+    )
+    parser.add_argument(
+        "--master_port",
+        type=int,
+        default=1234,
+        help="Free port to use on rank 0 node when running on multiple nodes in parallel"
+    )
+    parser.add_argument(
+        "--workers_per_process",
+        type=int,
+        default=1,
+        help="Number of subprocesses to use for data loading, set to 0 to load in main process"
+    )
+    parser.add_argument(
+        "--threads_per_rank",
+        type=int,
+        default=min(8, torch.multiprocessing.cpu_count()),
+        help="Number of threads to use per rank for intraop parallelism on CPU"
+    )
     return parser.parse_args()
 
 
 def post_process_hyperparameters(hyperparameters: dict[str, Any], cli_args: argparse.Namespace):
     """Update loaded hyperparameter dictionary in-place using CLI argument values."""
     hyperparameters["model_name"] = cli_args.json_config_file.stem
-    hyperparameters['checkpoint_folder'] = str(cli_args.output_dir / 'torch_checkpoints')
-    hyperparameters['tensorboard_dir'] = str(cli_args.output_dir / 'tensorboard')
-    hyperparameters['recon_folder'] = str(cli_args.output_dir / 'reconstructions')
-    for key in ["nifti_flair_dir", "CUDA_devices", "local_rank"]:
+    hyperparameters["checkpoint_folder"] = str(cli_args.output_dir / "torch_checkpoints")
+    hyperparameters["tensorboard_dir"] = str(cli_args.output_dir / "tensorboard")
+    hyperparameters["recon_folder"] = str(cli_args.output_dir / "reconstructions")
+    for key in [
+        "nifti_flair_dir", 
+        "CUDA_devices", 
+        "local_rank", 
+        "master_addr", 
+        "master_port", 
+        "workers_per_process", 
+        "threads_per_rank"
+    ]:
         hyperparameters[key] = getattr(cli_args, key)
     if (
         not isinstance(hyperparameters["latents_per_channel_weight_sharing"], list) 
