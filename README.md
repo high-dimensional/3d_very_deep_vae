@@ -94,7 +94,7 @@ python -m torch.distributed.run \
   --nproc_per_node=8 --nnodes=2 --node_rank=1 \
   --master_addr={ip_address} --master_port={port_number} \
   scripts/train_vae_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
-  --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7
+  --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7 \
   --master_addr {ip_address} --master_port {port_number}
 ```
 
