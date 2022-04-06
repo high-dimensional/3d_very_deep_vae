@@ -89,41 +89,28 @@ def post_process_hyperparameters(hyperparameters: dict[str, Any], cli_args: argp
         "threads_per_rank"
     ]:
         hyperparameters[key] = getattr(cli_args, key)
-    if (
-        not isinstance(hyperparameters["latents_per_channel_weight_sharing"], list) 
-        and hyperparameters["latents_per_channel_weight_sharing"] == "none"
-    ):
-        assert "latents_per_channel" in hyperparameters, (
-            "latents_per_channel must be specified in configuration file "
-            "if latents_per_channel_weight_sharing=='none'"
-        )
-        hyperparameters["latents_per_channel_weight_sharing"] = (
-            [False] * len(hyperparameters['latents_per_channel'])
-        )
-    if (
-        not isinstance(hyperparameters["latents_to_use"], list) 
-        and hyperparameters["latents_to_use"] == "all"
-    ):
-        assert "latents_per_channel" in hyperparameters, (
-            "latents_per_channel must be specified in configuration file "
-            "if latents_to_use=='all'"
-        )
-        hyperparameters["latents_to_use"] = (
-            [True] * sum(hyperparameters['latents_per_channel'])
-        )
-    if (
-        not isinstance(hyperparameters["latents_to_optimise"], list) 
-        and hyperparameters["latents_to_optimise"] == "all"
-    ):
-        assert "latents_per_channel" in hyperparameters, (
-            "latents_per_channel must be specified in configuration file "
-            "if latents_to_optimise=='all'"
-        )
-        hyperparameters["latents_to_optimise"] = (
-            [True] * sum(hyperparameters['latents_per_channel'])
-        )
+    # For hyperparameters which require specifying a boolean flag per channel or latent 
+    # dimension we optionally allow using the string shorthands "all" or "none" to indicate 
+    # the value for all dimensions are True or False respectively
+    for key, size_as_function_of_latents_per_channel in [
+        ("latents_per_channel_weight_sharing", len),
+        ("latents_to_use", sum),
+        ("latents_to_optimise", sum),
+    ]:
+        if (
+            not isinstance(hyperparameters[key], list) 
+            and hyperparameters[key] in {"none", "all"}
+        ):
+            assert "latents_per_channel" in hyperparameters, (
+                "latents_per_channel must be specified in configuration file "
+                f"if {key} is either 'none' or 'all'"
+            )
+            hyperparameters[key] = (
+                [hyperparameters[key] == "all"] * 
+                size_as_function_of_latents_per_channel(hyperparameters['latents_per_channel'])
+            )
 
-        
+
 def main():
     cli_args = parse_command_line_arguments()
     if not cli_args.json_config_file.exists():
