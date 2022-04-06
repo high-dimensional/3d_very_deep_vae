@@ -28,15 +28,21 @@ The code is currently designed to train variational autoencoder models on volume
 
 ## Model training
 
-A script [`train_vae_model.py`](scripts/train_vae_model.py) is included in the `scripts` directory for training variational autoencoder models on the UK Biobank FLAIR image data. Three pre-defined model configurations are given in the `example_configurations` directory as _JavaScript Object Notation_ (JSON) files &mdash; `VeryDeepVAE_32x32x32.json`, `VeryDeepVAE_64x64x64.json` and `VeryDeepVAE_128x128x128.json` &mdash; these differ only in the target resolution of the generated images (respectively `32×32×32`, `64×64×64` and `128×128×128`) and the number of layers in the autoencoder model (see [_Layer definitions_](#layer-definitions) below), with the `64×64×64` configuration having one more layer than the `32×32×32` configuration and the `128×128×128` configuration having one more layer again than the `64×64×64` configuration.
+A script [`train_vae_model.py`](scripts/train_vae_model.py) is included in the `scripts` directory for training variational autoencoder models on the UK Biobank FLAIR image data. Three pre-defined model configurations are given in the `example_configurations` directory as _JavaScript Object Notation_ (JSON) files &mdash; `VeryDeepVAE_32x32x32.json`, `VeryDeepVAE_64x64x64.json` and `VeryDeepVAE_128x128x128.json` &mdash; these differ only in the target resolution of the generated images (respectively `32×32×32`, `64×64×64` and `128×128×128`), the batch size used in training and the number and dimensions of the layers in the autoencoder model (see [_Layer definitions_](#layer-definitions) below), with the `64×64×64` configuration having one more layer than the `32×32×32` configuration and the `128×128×128` configuration having one more layer again than the `64×64×64` configuration.
 
-The model configuration defined in `VeryDeepVAE_128x128x128.json` has a peak GPU memory usage of 31.9GB, so should be runnable on a GPU with 32GB of device memory. Changing the latent dimensionality per channel from the default 7 to 6 by setting the `latents_per_channel` hyperparameter should make it fit comfortably in 32GB if that becomes a problem.
+All three example model configurations have specified to have a peak GPU memory usage of (just) less than 32GiB, so should be runnable on a GPU with 32GiB of device memory or above. To run on a GPU with less memory, either the batch size should be reduced using the `batch_size` [hyperparameter](#hyperparameters) or the latent dimensionality using the `latent_per_channels` hyperparameter - see the [_Layer definitions_ section below](#layer-definitions) for more details.
 
 New model configurations can be specified by creating a JSON file following the structure of the included examples to define the hyperparameter values specifying the model and training configuration. See the [_Hyperparameters_ section below](#hyperparameters) for details of some of the more important properties.
 
 ### Example usages
 
 In the below `{config_file}` should be replaced with the path to the relevant JSON file for the model configuration to train (for example `example_configurations/VeryDeepVAE_32x32x32.json`), `{nifti_flair_directory}` with the path to the directory containing the UK Biobank imaging data NiFTI FLAIR image files and `{output_directory}` by the path to the root directory to save all model outputs to during training. In all cases it is assumed the commands are being executed in a Unix shell such as `sh` or `bash` - if using an alternative command-line interpreter such as `cmd.exe` or PowerShell on Windows the commands will not work.
+
+To see the full set of command line arguments that can be passed to the training script run
+
+```bash
+python scripts/train_vae_model.py --help
+```
 
 #### Running on a single GPU
 
@@ -78,7 +84,8 @@ python -m torch.distributed.run \
   --nproc_per_node=8 --nnodes=2 --node_rank=0 \
   --master_addr={ip_address} --master_port={port_number} \
   scripts/train_vae_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
-  --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7
+  --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7 \ 
+  --master_addr {ip_address} --master_port {port_number}
 ```
 _On second node_
 
@@ -88,6 +95,7 @@ python -m torch.distributed.run \
   --master_addr={ip_address} --master_port={port_number} \
   scripts/train_vae_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
   --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7
+  --master_addr {ip_address} --master_port {port_number}
 ```
 
 where `{ip_address}` is the IP address of the rank 0 node and `{port_number}` is a free 
@@ -98,9 +106,9 @@ port on the rank 0 node.
 The hyperparameters specifying the model and training run configuration are specified in a JSON file. Details of some of the more important hyperparameters and their keys are:
 
 - `batch_size`:
-  The number of images per minibatch for the stochastic gradient descent training algorithm. For the `128×128×128` configuration the model has been successfully trained with a batch size of 2 or 3 on _Cambridge-1_, and a batch size of 1 on V100 DGX1s. Much higher batch sizes are possible at lower resolutions.
+  The number of images per minibatch for the stochastic gradient descent training algorithm. For the `128×128×128` configuration the model a batch size of 1 is needed to keep the peak GPU memory use below 32GiB. Higher batch sizes are possible at lower resolutions or on GPUs with more device memory.
 - `max_niis_to_use`:
-  Use this to define a shorter epoch, for example to quickly test visualisations are being saved correctly.
+  The maximum number of NiFTI files to use in a training epoch. Use this to define a shorter epoch, for example to quickly test visualisations are being saved correctly.
 - `nii_target_shape`:
   Specifies the target resolution to generate images at as a list of three positive integers corresponding to integer powers of 2, for example `[128, 128, 128]` for a `128×128×128` resolution.
 - `visualise_training_pipeline_before_starting`:
