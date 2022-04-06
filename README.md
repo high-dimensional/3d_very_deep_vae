@@ -28,7 +28,7 @@ The code is currently designed to train variational autoencoder models on volume
 
 ## Model training
 
-A script [`train_model.py`](scripts/train_model.py) is included in the `scripts` directory for training variational autoencoder models on the UK Biobank FLAIR image data. Three pre-defined model configurations are given in the `example_configurations` directory as _JavaScript Object Notation_ (JSON) files &mdash; `VeryDeepVAE_32x32x32.json`, `VeryDeepVAE_64x64x64.json` and `VeryDeepVAE_128x128x128.json` &mdash; these differ only in the target resolution of the generated images (respectively `32×32×32`, `64×64×64` and `128×128×128`) and the number of layers in the autoencoder model (see [_Layer definitions_](#layer-definitions) below), with the `64×64×64` configuration having one more layer than the `32×32×32` configuration and the `128×128×128` configuration having one more layer again than the `64×64×64` configuration.
+A script [`train_vae_model.py`](scripts/train_vae_model.py) is included in the `scripts` directory for training variational autoencoder models on the UK Biobank FLAIR image data. Three pre-defined model configurations are given in the `example_configurations` directory as _JavaScript Object Notation_ (JSON) files &mdash; `VeryDeepVAE_32x32x32.json`, `VeryDeepVAE_64x64x64.json` and `VeryDeepVAE_128x128x128.json` &mdash; these differ only in the target resolution of the generated images (respectively `32×32×32`, `64×64×64` and `128×128×128`) and the number of layers in the autoencoder model (see [_Layer definitions_](#layer-definitions) below), with the `64×64×64` configuration having one more layer than the `32×32×32` configuration and the `128×128×128` configuration having one more layer again than the `64×64×64` configuration.
 
 The model configuration defined in `VeryDeepVAE_128x128x128.json` has a peak GPU memory usage of 31.9GB, so should be runnable on a GPU with 32GB of device memory. Changing the latent dimensionality per channel from the default 7 to 6 by setting the `latents_per_channel` hyperparameter should make it fit comfortably in 32GB if that becomes a problem.
 
@@ -43,7 +43,7 @@ In the below `{config_file}` should be replaced with the path to the relevant JS
 To run on one GPU:
 
 ```sh 
-python scripts/train_model.py --json_config_file {config_file} \
+python scripts/train_vae_model.py --json_config_file {config_file} \
   --nifti_flair_dir {nifti_flair_directory} --output_dir {output_directory}
 ```
   
@@ -53,7 +53,7 @@ To run on a single node with 8 GPU devices:
 
 ```sh
 python -m torch.distributed.run --nnodes=1 --nproc_per_node=8 \
-  scripts/train_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
+  scripts/train_vae_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
   --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7
 ```
 
@@ -62,7 +62,7 @@ To specify the backend and endpoint:
 ```sh
 python -m torch.distributed.run \ 
   --nnodes=1 --nproc_per_node=8 --rdzv_backend=c10d --rdzv_endpoint={endpoint} \
-  scripts/train_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
+  scripts/train_vae_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
   --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7
 ```
 where `{endpoint}` is the endpoint where the rendezvous backend is running in the form `host_ip:port`.
@@ -77,7 +77,7 @@ _On first node_
 python -m torch.distributed.run \ 
   --nproc_per_node=8 --nnodes=2 --node_rank=0 \
   --master_addr={ip_address} --master_port={port_number} \
-  scripts/train_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
+  scripts/train_vae_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
   --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7
 ```
 _On second node_
@@ -86,7 +86,7 @@ _On second node_
 python -m torch.distributed.run \ 
   --nproc_per_node=8 --nnodes=2 --node_rank=1 \
   --master_addr={ip_address} --master_port={port_number} \
-  scripts/train_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
+  scripts/train_vae_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
   --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7
 ```
 

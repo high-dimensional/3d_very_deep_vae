@@ -1,4 +1,5 @@
 graft requirements
 include tox.ini
 recursive-exclude .idea *
-recursive-exclude VeryDeepVAE_* *.py
+recursive-include example_configurations *.json
+recursive-include scripts *.py
