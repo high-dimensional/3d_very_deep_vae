@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+title: 3d_very_deep_vae
+message: Please cite this software using these metadata.
+type: software
+authors:
+  - given-names: Robert
+    family-names: Gray
+    email: r.gray@ucl.ac.uk
+    affiliation: University College London
+  - given-names: Matthew
+    name-particle: M
+    family-names: Graham
+    email: m.graham@ucl.ac.uk
+    affiliation: University College London
+    orcid: 'https://orcid.org/0000-0001-9104-7960'
+repository-code: 'https://github.com/r-gray/3d_very_deep_vae'
+abstract: >-
+  PyTorch implementations of variational autoencoder
+  models for generating synthetic three-dimensional
+  images based on neuroimaging training data
+keywords:
+  - pytorch
+  - variational autoencoder
+  - neuroimaging
+  - generative model
+license: GPL-3.0
