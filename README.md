@@ -28,23 +28,23 @@ The code is currently designed to train variational autoencoder models on volume
 
 ## Model training
 
-Scripts are included for training variational autoencoder models with three pre-defined configurations on UK Biobank FLAIR image data. The three pre-defined model configurations in the `VeryDeepVAE_32x32x32`, `VeryDeepVAE_64x64x64` and `VeryDeepVAE_128x128x128` directories differ only in the target resolution of the generated images (respectively `32×32×32`, `64×64×64` and `128×128×128`) and the number of layers in the autoencoder model (see [_Layer definitions_](#layer-definitions) below), with the `64×64×64` configuration having one more layer than the `32×32×32` configuration and the `128×128×128` configuration having one more layer again than the `64×64×64` configuration.
+A script [`train_model.py`](scripts/train_model.py) is included in the `scripts` directory for training variational autoencoder models on the UK Biobank FLAIR image data. Three pre-defined model configurations are given in the `example_configurations` directory as _JavaScript Object Notation_ (JSON) files &mdash; `VeryDeepVAE_32x32x32.json`, `VeryDeepVAE_64x64x64.json` and `VeryDeepVAE_128x128x128.json` &mdash; these differ only in the target resolution of the generated images (respectively `32×32×32`, `64×64×64` and `128×128×128`) and the number of layers in the autoencoder model (see [_Layer definitions_](#layer-definitions) below), with the `64×64×64` configuration having one more layer than the `32×32×32` configuration and the `128×128×128` configuration having one more layer again than the `64×64×64` configuration.
 
-The model configuration defined in `VeryDeepVAE_128x128x128` has a peak GPU memory usage of 31.9GB, so should be runnable on a GPU with 32GB of device memory. Changing the latent dimensionality per channel from the default 7 to 6 by setting the `latents_per_channel` hyperparameter should make it fit comfortably in 32GB if that becomes a problem.
+The model configuration defined in `VeryDeepVAE_128x128x128.json` has a peak GPU memory usage of 31.9GB, so should be runnable on a GPU with 32GB of device memory. Changing the latent dimensionality per channel from the default 7 to 6 by setting the `latents_per_channel` hyperparameter should make it fit comfortably in 32GB if that becomes a problem.
 
-To create a new model configuration create a new folder in the root of the local clone of the repository and create a `run_autoencoder.py` file in it, following the structure of the included examples to define a dictionary `hyper_params` containing the hyperparameter values specifying the model and training configuration. See the [_Hyperparameters_ section below](#hyperparameters) for details of some of the more important properties.
+New model configurations can be specified by creating a JSON file following the structure of the included examples to define the hyperparameter values specifying the model and training configuration. See the [_Hyperparameters_ section below](#hyperparameters) for details of some of the more important properties.
 
 ### Example usages
 
-In the below `{configuration_directory}` should be replaced with the relevant directory for the desired model configuration to train (for example `VeryDeepVAE_128x128x128`) and `{nifti_flair_directory}` with the path to the directory containing the UK Biobank imaging data NiFTI FLAIR image files. In all cases it is assumed the commands are being executed in a Unix shell such as `sh` or `bash` - if using an alternative command-line interpreter such as `cmd.exe` or PowerShell on Windows the commands will not work.
+In the below `{config_file}` should be replaced with the path to the relevant JSON file for the model configuration to train (for example `example_configurations/VeryDeepVAE_32x32x32.json`), `{nifti_flair_directory}` with the path to the directory containing the UK Biobank imaging data NiFTI FLAIR image files and `{output_directory}` by the path to the root directory to save all model outputs to during training. In all cases it is assumed the commands are being executed in a Unix shell such as `sh` or `bash` - if using an alternative command-line interpreter such as `cmd.exe` or PowerShell on Windows the commands will not work.
 
 #### Running on a single GPU
 
-To run on one GPU (see the [point below about `CUDA_devices` hyperparameter](#cuda-devices)):
+To run on one GPU:
 
 ```sh 
-python {configuration_directory}/run_autoencoder.py \
-  --CUDA_devices 0 --local_rank 0 --nifti_flair_dir {nifti_flair_directory} 
+python scripts/train_model.py --json_config_file {config_file} \
+  --nifti_flair_dir {nifti_flair_directory} --output_dir {output_directory}
 ```
   
 #### Running on multiple GPUs
@@ -53,8 +53,8 @@ To run on a single node with 8 GPU devices:
 
 ```sh
 python -m torch.distributed.run --nnodes=1 --nproc_per_node=8 \
-  {configuration_directory}/run_autoencoder.py \ 
-  --CUDA_devices 0,1,2,3,4,5,6,7 --nifti_flair_dir {nifti_flair_directory}
+  scripts/train_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
+  --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7
 ```
 
 To specify the backend and endpoint:
@@ -62,8 +62,8 @@ To specify the backend and endpoint:
 ```sh
 python -m torch.distributed.run \ 
   --nnodes=1 --nproc_per_node=8 --rdzv_backend=c10d --rdzv_endpoint={endpoint} \
-  {configuration_directory}/run_autoencoder.py \ 
-  --CUDA_devices 0,1,2,3,4,5,6,7 --nifti_flair_dir {nifti_flair_directory}
+  scripts/train_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
+  --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7
 ```
 where `{endpoint}` is the endpoint where the rendezvous backend is running in the form `host_ip:port`.
 
@@ -77,8 +77,8 @@ _On first node_
 python -m torch.distributed.run \ 
   --nproc_per_node=8 --nnodes=2 --node_rank=0 \
   --master_addr={ip_address} --master_port={port_number} \
-  {configuration_directory}/run_autoencoder.py \
-  --CUDA_devices 0,1,2,3,4,5,6,7 --nifti_flair_dir {nifti_flair_directory}
+  scripts/train_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
+  --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7
 ```
 _On second node_
 
@@ -86,50 +86,38 @@ _On second node_
 python -m torch.distributed.run \ 
   --nproc_per_node=8 --nnodes=2 --node_rank=1 \
   --master_addr={ip_address} --master_port={port_number} \
-  {configuration_directory}/run_autoencoder.py \
-  --CUDA_devices 0,1,2,3,4,5,6,7 --nifti_flair_dir {nifti_flair_directory}
+  scripts/train_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
+  --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7
 ```
 
 where `{ip_address}` is the IP address of the rank 0 node and `{port_number}` is a free 
 port on the rank 0 node. 
 
-#### Halting zombie runs
-
-To kill zombies run
-
-```sh
-kill $(ps aux | grep config.py | grep -v grep | awk '{print $2}') and kill $(ps aux | grep multiprocessing.spawn | grep -v grep | awk '{print $2}')
-```
-
 ## Hyperparameters
 
-The hyperparameters specifying the model configuration are specified in a dictionary `hyper_params` constructed in the `run_autoencoder.py` scripts, with some hyperparameters also possible to set instead via command line arguments. Details of some of the more important hyperparameters and their keys in the `hyper_params` dictionary:
+The hyperparameters specifying the model and training run configuration are specified in a JSON file. Details of some of the more important hyperparameters and their keys are:
 
-- `nifti_flair_dir` : 
-  All the Biobank NiFTIs should be in this directory. This should be specifed _either_ as a string with key `nifti_flair_dir` in the hyperparameters dictionary or as a command line argument `--nifti_flair_dir` to the `run_autoencoders.py` script.
 - `batch_size`:
   The number of images per minibatch for the stochastic gradient descent training algorithm. For the `128×128×128` configuration the model has been successfully trained with a batch size of 2 or 3 on _Cambridge-1_, and a batch size of 1 on V100 DGX1s. Much higher batch sizes are possible at lower resolutions.
-- <a href='#' id='cuda-devices'></a>`CUDA_devices`:
-  Zero-indexed integer indices of the CUDA GPU devices to use in training on the current node. This should either be specified as a list of strings, for example `['0']` or `['0', '1']`, with key `CUDA_devices` in the hyperparameters dictionary or as a command line argument `--CUDA_devices` as comma-separated integers, for example `--CUDA_devices 0` or `--CUDA_devices 0,1`.
 - `max_niis_to_use`:
   Use this to define a shorter epoch, for example to quickly test visualisations are being saved correctly.
 - `nii_target_shape`:
   Specifies the target resolution to generate images at as a list of three positive integers corresponding to integer powers of 2, for example `[128, 128, 128]` for a `128×128×128` resolution.
 - `visualise_training_pipeline_before_starting`:
-  Set this to `True` to see a folder (`pipeline_test`, in the output folder) of augmented examples.
+  Set this to `true` to see a folder (`pipeline_test`, in the output folder) of augmented examples.
 
 ### Layer definitions
 
-The model architecture is specified by a series of hyperparamters `latents_per_channel`, `channels_per_latent`, `channels`, `kernel_sizes_bottom_up` and `kernel_sizes_top_down`, each of which is list of `k + 1` integers where `k` is the base-2 logarithm of the resolution along each dimension - for example for the `128×128×128` configuration `k = 7`. The corresponding entries in all lists define a convolution block and after each of these we downsample by a factor of two in each spatial dimension on the way up and upsample by a factor of two in each spatial dimension on the way back down. This version of the code has not been tested when these lists have fewer than `k + 1` elements - you have been warned!
+The model architecture is specified by a series of hyperparameters `latents_per_channel`, `channels_per_latent`, `channels`, `kernel_sizes_bottom_up` and `kernel_sizes_top_down`, each of which is list of `k + 1` integers where `k` is the base-2 logarithm of the resolution along each dimension - for example for the `128×128×128` configuration `k = 7`. The corresponding entries in all lists define a convolution block and after each of these we downsample by a factor of two in each spatial dimension on the way up and upsample by a factor of two in each spatial dimension on the way back down. This version of the code has not been tested when these lists have fewer than `k + 1` elements - you have been warned!
 
-An example valid definition for the `128×128×128` configuration is
+As an example the definition for the example `128×128×128` configuration is
 
-```Python
-hyper_params['latents_per_channel'] = [2, 7, 6, 5, 4, 3, 2, 1]
-hyper_params['channels_per_latent'] = [20, 20, 20, 20, 20, 20, 20, 200]  
-hyper_params['channels'] = [20, 40, 60, 80, 100, 120, 140, 160]
-hyper_params['kernel_sizes_bottom_up'] = [3, 3, 3, 3, 3, 3, 2, 1]
-hyper_params['kernel_sizes_top_down'] = [3, 3, 3, 3, 3, 3, 2, 1]  
+```JSON
+  "latents_per_channel":  [2, 7, 6, 5, 4, 3, 2, 1],
+  "channels_per_latent": [20, 20, 20, 20, 20, 20, 20, 200],
+  "channels": [20, 40, 60, 80, 100, 120, 140, 160],
+  "kernel_sizes_bottom_up": [3, 3, 3, 3, 3, 3, 2, 1],
+  "kernel_sizes_top_down": [3, 3, 3, 3, 3, 3, 2, 1],
 ```
 
 where for example the first line specifies that, reading left to right, we have 2 latent dimensions per channel at `128×128×128` resolution, 7 latent dimensions per channel at `64×64×64` resolution, 6 latents per channel at `32×32×32` resolution, 5 latent dimensions per channel at `16×16×16` resolution and so on.
