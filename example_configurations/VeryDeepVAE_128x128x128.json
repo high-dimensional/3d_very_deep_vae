@@ -63,5 +63,5 @@
     "use_DDP": true,
     "master_addr": "localhost",
     "master_port": 12345,
-    "workers_per_process": 5
+    "workers_per_process": 1
 }
