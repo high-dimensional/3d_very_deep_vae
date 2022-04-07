@@ -15,13 +15,6 @@ def setup_environment(hyper_params):
     See https://pytorch.org/docs/stable/elastic/run.html for a list of environmental variables created by
     torch.distributed.run
     """
-
-    if hasattr(hyper_params['args'], 'CUDA_devices') and hyper_params['args'].CUDA_devices is not None:
-        hyper_params['CUDA_devices'] = hyper_params['args'].CUDA_devices.split(",")
-    elif 'CUDA_devices' not in hyper_params and 'CUDA_devices' not in os.environ:
-        print("Cannot find CUDA_devices in input args, hyper_params or environmental vars. Quitting.")
-        quit()
-
     if 'LOCAL_WORLD_SIZE' in os.environ and os.environ['LOCAL_WORLD_SIZE'] is not None:
         """
         The presence of these environmental variables suggests we have a dist.run startup
@@ -50,17 +43,8 @@ def setup_environment(hyper_params):
         hyper_params['master_port'] = master_port
         misc.print_0(hyper_params, "Found master_port in MASTER_ADDR env var: " + str(master_port))
     else:
-        if hasattr(hyper_params['args'], 'local_rank'):
-            local_rank = hyper_params['args'].local_rank
-            hyper_params['local_rank'] = local_rank
-            if local_rank is None:
-                print("local_rank is NONE: quitting")
-                quit()
-            else:
-                misc.print_0(hyper_params, "Found local_rank in input args: " + str(local_rank))
-        else:
-            local_rank = hyper_params['local_rank']
-            misc.print_0(hyper_params, "Found local_rank in hyper_params: " + str(local_rank))
+        local_rank = hyper_params['local_rank']
+        misc.print_0(hyper_params, "Found local_rank in hyper_params: " + str(local_rank))
 
         if 'world_size' in hyper_params:
             world_size = hyper_params['world_size']
@@ -91,7 +75,7 @@ def setup_environment(hyper_params):
         hyper_params['global_world_size'] = hyper_params['world_size']
         hyper_params['global_rank'] = hyper_params['local_rank']
 
-    os.environ['OMP_NUM_THREADS'] = str(hyper_params['workers_per_process'])
+    os.environ['OMP_NUM_THREADS'] = str(hyper_params['threads_per_rank'])
     os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(hyper_params['CUDA_devices'])
 
     hyper_params['host_name'] = socket.gethostname()
@@ -105,13 +89,8 @@ def setup_environment(hyper_params):
     if local_rank > 0:
         hyper_params['verbose'] = False
 
-    if 'threads_per_rank' in hyper_params:
-        torch.set_num_threads(hyper_params['threads_per_rank'])
-        misc.print_0(hyper_params, f"Setting number of threads to {hyper_params['threads_per_rank']}")
-    else:
-        misc.print_0(hyper_params, "Setting number of threads to 8")
-        torch.set_num_threads(8)
-
+    torch.set_num_threads(hyper_params['threads_per_rank'])
+    misc.print_0(hyper_params, f"Setting number of threads to {hyper_params['threads_per_rank']}")
     misc.print_0(hyper_params, "NB: Only output from the rank_0 process is displayed")
     misc.print_0(hyper_params, "Master IP: " + str(hyper_params['master_addr']))
     misc.print_0(hyper_params, "Master Port: " + str(hyper_params['master_port']))
@@ -143,8 +122,6 @@ def setup_environment(hyper_params):
     misc.print_0(hyper_params, "CUDA version: " + torch.version.cuda)
     misc.print_0(hyper_params, "CUDA_VISIBLE_DEVICES: " + os.environ['CUDA_VISIBLE_DEVICES'])
     misc.print_0(hyper_params, "Backend: " + backend)
-
-    hyper_params['recon_folder'] = os.path.join(hyper_params['current_dir'], 'output')
     hyper_params['samples_folder'] = os.path.join(hyper_params['recon_folder'], 'samples')
 
     # Checking folder exist is handled by the rank_0 process only!

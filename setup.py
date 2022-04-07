@@ -73,4 +73,5 @@ setup(
     packages=find_packages(),
     python_requires='>=3.7, <3.10',
     install_requires=install_requires,
+    scripts=['scripts/train_vae_model.py'],
 )
