@@ -130,6 +130,14 @@ As an example the definition for the example `128×128×128` configuration is
 
 where for example the first line specifies that, reading left to right, we have 2 latent dimensions per channel at `128×128×128` resolution, 7 latent dimensions per channel at `64×64×64` resolution, 6 latents per channel at `32×32×32` resolution, 5 latent dimensions per channel at `16×16×16` resolution and so on.
 
+## Authors
+
+Robert Gray, Matt Graham, M. Jorge Cardoso, Sebastien Ourselin, Geraint Rees, Parashkev Nachev
+
+## Funders
+
+The Wellcome Trust, the UCLH NIHR Biomedical Research Centre
+
 ## Licence
 
 The code is under the [GNU General Public License Version 3](LICENSE).
