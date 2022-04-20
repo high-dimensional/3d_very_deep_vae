@@ -4,7 +4,7 @@ import argparse
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 import torch
 from verydeepvae.orchestration import training_script_vae_new as training_script
 
@@ -73,7 +73,7 @@ def parse_command_line_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def post_process_hyperparameters(hyperparameters: dict[str, Any], cli_args: argparse.Namespace):
+def post_process_hyperparameters(hyperparameters: Dict[str, Any], cli_args: argparse.Namespace):
     """Update loaded hyperparameter dictionary in-place using CLI argument values."""
     hyperparameters["model_name"] = cli_args.json_config_file.stem
     hyperparameters["checkpoint_folder"] = str(cli_args.output_dir / "torch_checkpoints")
