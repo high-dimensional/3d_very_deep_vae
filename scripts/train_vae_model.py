@@ -25,7 +25,17 @@ def parse_command_line_arguments() -> argparse.Namespace:
         "--nifti_flair_dir", 
         type=Path,
         required=True,
-        help="Path to directory containing FLAIR image NiFTI files to train model with"
+        help="Path to directory containing FLAIR image NIfTI files to train model with",
+    )
+    parser.add_argument(
+        "--nifti_flair_pattern",
+        type=str,
+        default="*_flair.nii",
+        help=(
+            "Filename pattern for NIfTI image files to train model with. * matches "
+            "everything, ? matches any single character, [seq] matches any character "
+            "in seq, [!seq] matches any character not in seq"
+        ),
     )
     parser.add_argument(
         "--output_dir", 
@@ -81,12 +91,13 @@ def post_process_hyperparameters(hyperparameters: Dict[str, Any], cli_args: argp
     hyperparameters["recon_folder"] = str(cli_args.output_dir / "reconstructions")
     for key in [
         "nifti_flair_dir", 
+        "nifti_flair_pattern",
         "CUDA_devices", 
         "local_rank", 
         "master_addr", 
         "master_port", 
         "workers_per_process", 
-        "threads_per_rank"
+        "threads_per_rank",
     ]:
         hyperparameters[key] = getattr(cli_args, key)
     # For hyperparameters which require specifying a boolean flag per channel or latent 
@@ -118,7 +129,9 @@ def main():
     if not cli_args.nifti_flair_dir.exists():
         raise ValueError(f"nift_flair_dir {cli_args.nifti_flair_dir} does not exist")
     if not cli_args.nifti_flair_dir.is_dir():
-        raise ValueError(f"nift_flair_dir {cli_args.nifti_flair_dir} is not a directory")
+        raise ValueError(
+            f"nifti_flair_dir {cli_args.nifti_flair_dir} is not a directory"
+        )
     if not cli_args.output_dir.exists():
         os.makedirs(cli_args.output_dir)
     with open(cli_args.json_config_file, "r") as f:
