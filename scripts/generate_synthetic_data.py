@@ -92,10 +92,11 @@ def main():
     if args.voxels_per_axis <= 0 or (np.log2(args.voxels_per_axis) % 1) != 0.0:
         raise ValueError("voxels_per_image must be a positive power of two")
     rng = np.random.default_rng(args.random_seed)
-    for i in range(args.number_of_files):
+    for file_index in range(args.number_of_files):
         voxels = generate_synthetic_voxels(rng, args)
         nifti_image = nb.Nifti1Image(voxels, affine_transformation)
-        nb.save(nifti_image, args.output_directory / f"generated_{i}.nii")
+        padded_index = str(file_index).zfill(len(str(args.number_of_files - 1)))
+        nb.save(nifti_image, args.output_directory / f"ellipsoid_{padded_index}.nii")
 
 
 if __name__ == "__main__":

@@ -30,7 +30,7 @@ def parse_command_line_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--nifti_filename_pattern",
         type=str,
-        default="*_flair.nii",
+        default="*.nii",
         help=(
             "Pattern for names of NIfTI files to use to train and validate model. * "
             "matches everything, ? matches any single character, [seq] matches any  "
