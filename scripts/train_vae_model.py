@@ -10,47 +10,47 @@ from verydeepvae.orchestration import training_script_vae_new as training_script
 
 
 def parse_command_line_arguments() -> argparse.Namespace:
-    """Parse command line arguments."""    
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         "Train variational autoencoder model on neuroimaging data",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
-        "--json_config_file", 
+        "--json_config_file",
         type=Path,
         required=True,
         help="Path to JSON file specifying model and run hyperparameters"
     )
     parser.add_argument(
-        "--nifti_flair_dir", 
+        "--nifti_flair_dir",
         type=Path,
         required=True,
-        help="Path to directory containing FLAIR image NIfTI files to train model with",
+        help="Path to directory containing NIfTI files to train & validate model with",
     )
     parser.add_argument(
         "--nifti_flair_pattern",
         type=str,
         default="*_flair.nii",
         help=(
-            "Filename pattern for NIfTI image files to train model with. * matches "
-            "everything, ? matches any single character, [seq] matches any character "
-            "in seq, [!seq] matches any character not in seq"
+            "Pattern for names of NIfTI files to use to train and validate model. * "
+            "matches everything, ? matches any single character, [seq] matches any  "
+            "character in seq, [!seq] matches any character not in seq"
         ),
     )
     parser.add_argument(
-        "--output_dir", 
-        type=Path, 
+        "--output_dir",
+        type=Path,
         required=True,
         help="Directory to save run outputs to"
     )
     parser.add_argument(
-        "--local_rank", 
-        type=int, 
-        default=0, 
+        "--local_rank",
+        type=int,
+        default=0,
         help="Rank of node when running on multiple nodes in parallel"
     )
     parser.add_argument(
-        "--CUDA_devices", 
+        "--CUDA_devices",
         type=str,
         nargs="+",
         default=["0"],
@@ -66,13 +66,16 @@ def parse_command_line_arguments() -> argparse.Namespace:
         "--master_port",
         type=int,
         default=1234,
-        help="Free port to use on rank 0 node when running on multiple nodes in parallel"
+        help="Port to use on rank 0 node when running on multiple nodes in parallel"
     )
     parser.add_argument(
         "--workers_per_process",
         type=int,
         default=1,
-        help="Number of subprocesses to use for data loading, set to 0 to load in main process"
+        help=(
+            "Number of subprocesses to use for data loading, set to 0 to load in main "
+            "process"
+        )
     )
     parser.add_argument(
         "--threads_per_rank",
@@ -83,33 +86,35 @@ def parse_command_line_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def post_process_hyperparameters(hyperparameters: Dict[str, Any], cli_args: argparse.Namespace):
+def post_process_hyperparameters(
+    hyperparameters: Dict[str, Any], cli_args: argparse.Namespace
+):
     """Update loaded hyperparameter dictionary in-place using CLI argument values."""
     hyperparameters["model_name"] = cli_args.json_config_file.stem
-    hyperparameters["checkpoint_folder"] = str(cli_args.output_dir / "torch_checkpoints")
+    hyperparameters["checkpoint_folder"] = str(cli_args.output_dir / "checkpoints")
     hyperparameters["tensorboard_dir"] = str(cli_args.output_dir / "tensorboard")
     hyperparameters["recon_folder"] = str(cli_args.output_dir / "reconstructions")
     for key in [
-        "nifti_flair_dir", 
+        "nifti_flair_dir",
         "nifti_flair_pattern",
-        "CUDA_devices", 
-        "local_rank", 
-        "master_addr", 
-        "master_port", 
-        "workers_per_process", 
+        "CUDA_devices",
+        "local_rank",
+        "master_addr",
+        "master_port",
+        "workers_per_process",
         "threads_per_rank",
     ]:
         hyperparameters[key] = getattr(cli_args, key)
-    # For hyperparameters which require specifying a boolean flag per channel or latent 
-    # dimension we optionally allow using the string shorthands "all" or "none" to indicate 
-    # the value for all dimensions are True or False respectively
+    # For hyperparameters which require specifying a boolean flag per channel or latent
+    # dimension we optionally allow using the string shorthands "all" or "none" to
+    # indicate the value for all dimensions are True or False respectively
     for key, size_as_function_of_latents_per_channel in [
         ("latents_per_channel_weight_sharing", len),
         ("latents_to_use", sum),
         ("latents_to_optimise", sum),
     ]:
         if (
-            not isinstance(hyperparameters[key], list) 
+            not isinstance(hyperparameters[key], list)
             and hyperparameters[key] in {"none", "all"}
         ):
             assert "latents_per_channel" in hyperparameters, (
@@ -117,8 +122,10 @@ def post_process_hyperparameters(hyperparameters: Dict[str, Any], cli_args: argp
                 f"if {key} is either 'none' or 'all'"
             )
             hyperparameters[key] = (
-                [hyperparameters[key] == "all"] * 
-                size_as_function_of_latents_per_channel(hyperparameters['latents_per_channel'])
+                [hyperparameters[key] == "all"]
+                * size_as_function_of_latents_per_channel(
+                    hyperparameters['latents_per_channel']
+                )
             )
 
 
@@ -143,7 +150,7 @@ def main():
             ) from e
     post_process_hyperparameters(hyperparameters, cli_args)
     torch.multiprocessing.set_start_method("spawn")
-    training_script.main(hyperparameters)    
+    training_script.main(hyperparameters)
 
 
 if __name__ == "__main__":
