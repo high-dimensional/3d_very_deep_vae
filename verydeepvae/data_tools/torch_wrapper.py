@@ -13,12 +13,7 @@ class TorchIOWrapper(Randomizable, MapTransform):
     p: probability that this trans will be applied (to all the keys listed in 'keys')
     """
 
-    def __init__(
-        self,
-        keys: KeysCollection,
-            trans: None,
-            p: None
-    ) -> None:
+    def __init__(self, keys: KeysCollection, trans: None, p: None) -> None:
         """
         """
         super().__init__(keys)
@@ -31,7 +26,9 @@ class TorchIOWrapper(Randomizable, MapTransform):
     def randomize(self, data: Optional[Any] = None) -> None:
         self._do_transform = self.R.random() < self.prob
 
-    def __call__(self, data: Mapping[Hashable, np.ndarray]) -> Dict[Hashable, np.ndarray]:
+    def __call__(
+        self, data: Mapping[Hashable, np.ndarray]
+    ) -> Dict[Hashable, np.ndarray]:
 
         d = dict(data)
 
@@ -46,6 +43,6 @@ class TorchIOWrapper(Randomizable, MapTransform):
             else:
                 transformed = transformed.get_composed_history()
             transformed = transformed(subject)
-            d[self.keys[k]] = transformed['datum'].data
+            d[self.keys[k]] = transformed["datum"].data
 
         return d

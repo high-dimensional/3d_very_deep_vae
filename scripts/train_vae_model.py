@@ -13,13 +13,13 @@ def parse_command_line_arguments() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         "Train variational autoencoder model on neuroimaging data",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "--json_config_file",
         type=Path,
         required=True,
-        help="Path to JSON file specifying model and run hyperparameters"
+        help="Path to JSON file specifying model and run hyperparameters",
     )
     parser.add_argument(
         "--nifti_dir",
@@ -41,32 +41,32 @@ def parse_command_line_arguments() -> argparse.Namespace:
         "--output_dir",
         type=Path,
         required=True,
-        help="Directory to save run outputs to"
+        help="Directory to save run outputs to",
     )
     parser.add_argument(
         "--local_rank",
         type=int,
         default=0,
-        help="Rank of node when running on multiple nodes in parallel"
+        help="Rank of node when running on multiple nodes in parallel",
     )
     parser.add_argument(
         "--CUDA_devices",
         type=str,
         nargs="+",
         default=["0"],
-        help="Device indices (zero-based) for GPUs to use when training model"
+        help="Device indices (zero-based) for GPUs to use when training model",
     )
     parser.add_argument(
         "--master_addr",
         type=str,
         default="127.0.0.1",
-        help="IP address of rank 0 node when running on multiple nodes in parallel"
+        help="IP address of rank 0 node when running on multiple nodes in parallel",
     )
     parser.add_argument(
         "--master_port",
         type=int,
         default=1234,
-        help="Port to use on rank 0 node when running on multiple nodes in parallel"
+        help="Port to use on rank 0 node when running on multiple nodes in parallel",
     )
     parser.add_argument(
         "--workers_per_process",
@@ -75,13 +75,13 @@ def parse_command_line_arguments() -> argparse.Namespace:
         help=(
             "Number of subprocesses to use for data loading, set to 0 to load in main "
             "process"
-        )
+        ),
     )
     parser.add_argument(
         "--threads_per_rank",
         type=int,
         default=min(8, torch.multiprocessing.cpu_count()),
-        help="Number of threads to use per rank for intraop parallelism on CPU"
+        help="Number of threads to use per rank for intraop parallelism on CPU",
     )
     return parser.parse_args()
 
@@ -113,19 +113,18 @@ def post_process_hyperparameters(
         ("latents_to_use", sum),
         ("latents_to_optimise", sum),
     ]:
-        if (
-            not isinstance(hyperparameters[key], list)
-            and hyperparameters[key] in {"none", "all"}
-        ):
+        if not isinstance(hyperparameters[key], list) and hyperparameters[key] in {
+            "none",
+            "all",
+        }:
             assert "latents_per_channel" in hyperparameters, (
                 "latents_per_channel must be specified in configuration file "
                 f"if {key} is either 'none' or 'all'"
             )
-            hyperparameters[key] = (
-                [hyperparameters[key] == "all"]
-                * size_as_function_of_latents_per_channel(
-                    hyperparameters['latents_per_channel']
-                )
+            hyperparameters[key] = [
+                hyperparameters[key] == "all"
+            ] * size_as_function_of_latents_per_channel(
+                hyperparameters["latents_per_channel"]
             )
 
 
@@ -136,9 +135,7 @@ def main():
     if not cli_args.nifti_dir.exists():
         raise ValueError(f"nifti_dir {cli_args.nifti_dir} does not exist")
     if not cli_args.nifti_dir.is_dir():
-        raise ValueError(
-            f"nifti_dir {cli_args.nifti_dir} is not a directory"
-        )
+        raise ValueError(f"nifti_dir {cli_args.nifti_dir} is not a directory")
     if not cli_args.output_dir.exists():
         os.makedirs(cli_args.output_dir)
     with open(cli_args.json_config_file, "r") as f:

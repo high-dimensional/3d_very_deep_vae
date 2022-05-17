@@ -3,13 +3,21 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 from PIL import Image
+
 Image.MAX_IMAGE_PIXELS = None
 from PIL import ImageOps
 
 
 class JPEGDataset(Dataset):
-    def __init__(self, jpeg_dir, file_names, csv_attr_path, transforms=None, attr_to_keep=[8, 9, 11, 20, 39],
-                 hyper_params=None):
+    def __init__(
+        self,
+        jpeg_dir,
+        file_names,
+        csv_attr_path,
+        transforms=None,
+        attr_to_keep=[8, 9, 11, 20, 39],
+        hyper_params=None,
+    ):
 
         self.jpeg_dir = jpeg_dir
         self.file_names = file_names
@@ -65,7 +73,11 @@ class JPEGDataset(Dataset):
         if self.metadata is None:
             l = np.zeros_like(1)
         else:
-            l = self.metadata.loc[self.metadata['image_id'] == file_id].to_numpy()[:, 1:].astype(np.int8)
+            l = (
+                self.metadata.loc[self.metadata["image_id"] == file_id]
+                .to_numpy()[:, 1:]
+                .astype(np.int8)
+            )
             l = np.squeeze(l)
             l = (l + 1) // 2
             l = l[self.attr_to_keep]

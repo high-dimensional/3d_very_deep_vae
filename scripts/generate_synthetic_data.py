@@ -8,6 +8,7 @@ import nibabel as nb
 import tqdm
 from scipy.ndimage import gaussian_filter
 
+
 def generate_synthetic_voxels(rng, args):
     shape = (args.voxels_per_axis,) * 3
     voxels = gaussian_filter(
