@@ -22,13 +22,13 @@ def parse_command_line_arguments() -> argparse.Namespace:
         help="Path to JSON file specifying model and run hyperparameters"
     )
     parser.add_argument(
-        "--nifti_flair_dir",
+        "--nifti_dir",
         type=Path,
         required=True,
         help="Path to directory containing NIfTI files to train & validate model with",
     )
     parser.add_argument(
-        "--nifti_flair_pattern",
+        "--nifti_filename_pattern",
         type=str,
         default="*_flair.nii",
         help=(
@@ -95,8 +95,8 @@ def post_process_hyperparameters(
     hyperparameters["tensorboard_dir"] = str(cli_args.output_dir / "tensorboard")
     hyperparameters["recon_folder"] = str(cli_args.output_dir / "reconstructions")
     for key in [
-        "nifti_flair_dir",
-        "nifti_flair_pattern",
+        "nifti_dir",
+        "nifti_filename_pattern",
         "CUDA_devices",
         "local_rank",
         "master_addr",
@@ -133,11 +133,11 @@ def main():
     cli_args = parse_command_line_arguments()
     if not cli_args.json_config_file.exists():
         raise ValueError(f"No configuration file found at {cli_args.json_config_file}")
-    if not cli_args.nifti_flair_dir.exists():
-        raise ValueError(f"nift_flair_dir {cli_args.nifti_flair_dir} does not exist")
-    if not cli_args.nifti_flair_dir.is_dir():
+    if not cli_args.nifti_dir.exists():
+        raise ValueError(f"nifti_dir {cli_args.nifti_dir} does not exist")
+    if not cli_args.nifti_dir.is_dir():
         raise ValueError(
-            f"nifti_flair_dir {cli_args.nifti_flair_dir} is not a directory"
+            f"nifti_dir {cli_args.nifti_dir} is not a directory"
         )
     if not cli_args.output_dir.exists():
         os.makedirs(cli_args.output_dir)
