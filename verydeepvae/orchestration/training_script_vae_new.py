@@ -432,7 +432,7 @@ def main(hyper_params):
         loss_history_val_loss = []
         loss_history_val_nll_bits_per_dim = []
 
-    for epoch in range(starting_epoch, hyper_params['total_epochs']):
+    for epoch in range(starting_epoch, hyper_params['total_epochs'] + 1):
         torch.cuda.empty_cache()  # Reduces risk of memory leaks after repeated computation of recons, samples etc
 
         sampler_train.set_epoch(epoch)  # Shuffle each epoch
