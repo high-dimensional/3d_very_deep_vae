@@ -5,8 +5,8 @@ import os
 import pathlib
 import numpy as np
 import nibabel as nb
+import tqdm
 from scipy.ndimage import gaussian_filter
-
 
 def generate_synthetic_voxels(rng, args):
     shape = (args.voxels_per_axis,) * 3
@@ -92,7 +92,7 @@ def main():
     if args.voxels_per_axis <= 0 or (np.log2(args.voxels_per_axis) % 1) != 0.0:
         raise ValueError("voxels_per_image must be a positive power of two")
     rng = np.random.default_rng(args.random_seed)
-    for file_index in range(args.number_of_files):
+    for file_index in tqdm.trange(args.number_of_files):
         voxels = generate_synthetic_voxels(rng, args)
         nifti_image = nb.Nifti1Image(voxels, affine_transformation)
         padded_index = str(file_index).zfill(len(str(args.number_of_files - 1)))
