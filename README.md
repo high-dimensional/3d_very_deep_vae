@@ -23,7 +23,22 @@ from the root of the repository.
 
 ## Input data
 
-The code is currently designed to train variational autoencoder models on volumetric neuroimaging data from the [UK Biobank imaging study](https://www.ukbiobank.ac.uk/enable-your-research/about-our-data/imaging-data). This dataset is not publicly accessible and requires [applying for access](https://www.ukbiobank.ac.uk/enable-your-research/apply-for-access). The package requires the imaging data to be accessible on the node(s) used for training as a flat directory of [NiFTI](https://radiopaedia.org/articles/nifti-file-format?lang=gb) files of [_fluid-attenuated inverse recovery_ (FLAIR)](https://radiopaedia.org/articles/fluid-attenuated-inversion-recovery?lang=gb) images. The FLAIR images are expected to be affine-aligned to a template and skull-stripped using the [_Statistical Parameter Mapping_ (SPM)](https://www.fil.ion.ucl.ac.uk/spm/) software package. An alternative openly accessible dataset will be provided at a later date.
+The code is currently designed to train variational autoencoder models on volumetric neuroimaging data from the [UK Biobank imaging study](https://www.ukbiobank.ac.uk/enable-your-research/about-our-data/imaging-data). This dataset is not publicly accessible and requires [applying for access](https://www.ukbiobank.ac.uk/enable-your-research/apply-for-access). The package requires the imaging data to be accessible on the node(s) used for training as a flat directory of [NIfTI](https://radiopaedia.org/articles/nifti-file-format?lang=gb) files of [_fluid-attenuated inverse recovery_ (FLAIR)](https://radiopaedia.org/articles/fluid-attenuated-inversion-recovery?lang=gb) images. The FLAIR images are expected to be affine-aligned to a template and skull-stripped using the [_Statistical Parameter Mapping_ (SPM)](https://www.fil.ion.ucl.ac.uk/spm/) software package.
+
+As an alternative for testing purposes, a script [`generate_synthetic_data.py`](scripts/generate_synthetic_data.py) is included in the `scripts` directory which can be used to generate a set of NIfTI volumetric image files of a specified resolution. The generated volumetric images consist of randomly oriented and sized ellipsoid inclusions overlaid with Gaussian filtered background noise. The script allows specifying the number of files to generate, their resolution and parameters controlling the noise amplitude and length scale, and difference between ellipsoid inclusion and background.
+
+To see the full set of command line arguments that can be passed to the training script run
+
+```bash
+python scripts/generate_synthetic_data.py --help
+```
+
+For example to generate a set of 10&thinsp;000 NIfTI image files each of resolution `32×32×32`, outputting the files to the directory at path `{nifti_directory}` run
+
+```bash
+python scripts/generate_synthetic_data.py \
+    --voxels_per_axis 32 --number_of_files 10000 --output_directory {nifti_directory}
+```
 
 
 ## Model training
@@ -36,7 +51,7 @@ New model configurations can be specified by creating a JSON file following the 
 
 ### Example usages
 
-In the below `{config_file}` should be replaced with the path to the relevant JSON file for the model configuration to train (for example `example_configurations/VeryDeepVAE_32x32x32.json`), `{nifti_flair_directory}` with the path to the directory containing the UK Biobank imaging data NiFTI FLAIR image files and `{output_directory}` by the path to the root directory to save all model outputs to during training. In all cases it is assumed the commands are being executed in a Unix shell such as `sh` or `bash` - if using an alternative command-line interpreter such as `cmd.exe` or PowerShell on Windows the commands will not work.
+In the below `{config_file}` should be replaced with the path to the relevant JSON file for the model configuration to train (for example `example_configurations/VeryDeepVAE_32x32x32.json`), `{nifti_directory}` with the path to the directory containing the NIfTI files to use as the trainining and validation data, and `{output_directory}` by the path to the root directory to save all model outputs to during training. In all cases it is assumed the commands are being executed in a Unix shell such as `sh` or `bash` - if using an alternative command-line interpreter such as `cmd.exe` or PowerShell on Windows the commands will not work.
 
 To see the full set of command line arguments that can be passed to the training script run
 
@@ -50,7 +65,7 @@ To run on one GPU:
 
 ```sh 
 python scripts/train_vae_model.py --json_config_file {config_file} \
-  --nifti_flair_dir {nifti_flair_directory} --output_dir {output_directory}
+  --nifti_dir {nifti_directory} --output_dir {output_directory}
 ```
   
 #### Running on multiple GPUs
@@ -59,7 +74,7 @@ To run on a single node with 8 GPU devices:
 
 ```sh
 python -m torch.distributed.run --nnodes=1 --nproc_per_node=8 \
-  scripts/train_vae_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
+  scripts/train_vae_model.py --json_config_file {config_file} --nifti_dir {nifti_directory} \
   --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7
 ```
 
@@ -68,7 +83,7 @@ To specify the backend and endpoint:
 ```sh
 python -m torch.distributed.run \ 
   --nnodes=1 --nproc_per_node=8 --rdzv_backend=c10d --rdzv_endpoint={endpoint} \
-  scripts/train_vae_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
+  scripts/train_vae_model.py --json_config_file {config_file} --nifti_dir {nifti_directory} \
   --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7
 ```
 where `{endpoint}` is the endpoint where the rendezvous backend is running in the form `host_ip:port`.
@@ -83,7 +98,7 @@ _On first node_
 python -m torch.distributed.run \ 
   --nproc_per_node=8 --nnodes=2 --node_rank=0 \
   --master_addr={ip_address} --master_port={port_number} \
-  scripts/train_vae_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
+  scripts/train_vae_model.py --json_config_file {config_file} --nifti_dir {nifti_directory} \
   --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7 \ 
   --master_addr {ip_address} --master_port {port_number}
 ```
@@ -93,7 +108,7 @@ _On second node_
 python -m torch.distributed.run \ 
   --nproc_per_node=8 --nnodes=2 --node_rank=1 \
   --master_addr={ip_address} --master_port={port_number} \
-  scripts/train_vae_model.py --json_config_file {config_file} --nifti_flair_dir {nifti_flair_directory} \
+  scripts/train_vae_model.py --json_config_file {config_file} --nifti_dir {nifti_directory} \
   --output_dir {output_directory} --CUDA_devices 0 1 2 3 4 5 6 7 \
   --master_addr {ip_address} --master_port {port_number}
 ```

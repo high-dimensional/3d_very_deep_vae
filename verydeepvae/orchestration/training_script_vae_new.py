@@ -1,3 +1,4 @@
+import glob
 import os
 import random
 import torch
@@ -75,19 +76,19 @@ def main(hyper_params):
             elif hyper_params['sequence_type'] == 'flair':
                 filenames_flair = checkpoint['filenames_flair']
                 misc.print_0(hyper_params, "Number of niftis: " + str(len(filenames_flair)))
-                nifti_paths_flair = [hyper_params['nifti_flair_dir'] / name for name in filenames_flair]
+                nifti_paths_flair = [hyper_params['nifti_dir'] / name for name in filenames_flair]
                 nifti_b1000_filenames = filenames_flair
                 nifti_b1000_paths = nifti_paths_flair
         else:
             misc.print_0(hyper_params, "Sequence type: " + hyper_params['sequence_type'])
-            misc.print_0(hyper_params, f"nifti_flair_dir found in hyper_params: {hyper_params['nifti_flair_dir']}")
-            filenames = os.listdir(hyper_params['nifti_flair_dir'])
-            filenames = [f for f in filenames if not f.startswith('.')]  # Remove hidden files
-            filenames = [f for f in filenames if '_20253_2_0.zip' in f]  # Remove hidden files
-            filenames_flair = [f for f in filenames if '_flair' in f]
-    
-            nifti_paths_flair = [hyper_params['nifti_flair_dir'] / name for name in filenames_flair]
-
+            misc.print_0(hyper_params, f"nifti_dir found in hyper_params: {hyper_params['nifti_dir']}")
+            nifti_paths_flair = glob.glob(
+                str(
+                    hyper_params['nifti_dir'] 
+                    / hyper_params["nifti_filename_pattern"]
+                )
+            )
+            filenames_flair = [os.path.basename(path) for path in nifti_paths_flair]
             eids = [f.split('_')[0] for f in filenames_flair]
     
             if misc.key_is_true(hyper_params, 'load_metadata'):
@@ -120,8 +121,8 @@ def main(hyper_params):
                 filenames_flair = [f for f in filenames_flair if f.split('_')[0] in eids_normal]
                 filenames_seg = [f.replace('_flair.nii', '_seg.nii') for f in filenames_flair]
     
-                nifti_paths_flair = [hyper_params['nifti_flair_dir'] / name for name in filenames_flair]
-                nifti_paths_seg = [hyper_params['nifti_flair_dir'] / name for name in filenames_seg]
+                nifti_paths_flair = [hyper_params['nifti_dir'] / name for name in filenames_flair]
+                nifti_paths_seg = [hyper_params['nifti_dir'] / name for name in filenames_seg]
     
             nifti_b1000_filenames = filenames_flair
             nifti_b1000_paths = nifti_paths_flair
