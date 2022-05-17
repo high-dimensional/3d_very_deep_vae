@@ -84,7 +84,16 @@ def setup_environment(hyper_params):
     hyper_params['device'] = device
     device_ids = [local_rank]
     hyper_params['device_ids'] = device_ids
-    torch.cuda.set_device(device)
+    try:
+        torch.cuda.set_device(device)
+        cuda_device_available = True
+    except RuntimeError:
+        misc.print_0(
+            hyper_params, f"Setting CUDA device {device} failed, falling back to CPU"
+        )
+        hyper_params["device"] = None
+        hyper_params['device_ids'] = None
+        cuda_device_available = False
 
     if local_rank > 0:
         hyper_params['verbose'] = False
@@ -99,7 +108,7 @@ def setup_environment(hyper_params):
     if hyper_params['global_world_size'] > 1:
         misc.print_0(hyper_params, "Waiting for all DDP processes to establish contact...", end="")
 
-    if dist.is_nccl_available():
+    if dist.is_nccl_available() and cuda_device_available:
         backend = 'nccl'
     else:
         backend = 'gloo'
