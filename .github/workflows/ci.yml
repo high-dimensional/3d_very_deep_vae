@@ -19,6 +19,9 @@ jobs:
     name: Run tests with Python ${{ matrix.python }}
     steps:
       - uses: actions/checkout@v3
+      - name: List checked out files
+        shell: bash
+        run: ls -R
       - name: Get tox environment name
         id: tox-env
         uses: actions/github-script@v4
