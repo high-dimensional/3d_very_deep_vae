@@ -33,7 +33,7 @@ jobs:
           python-version: ${{ matrix.python }}
           cache: "pip"
           cache-dependency-path: |
-            "requirements/${{ steps.tox-env.outputs.result }}-requirements.txt"
+            "**/${{ steps.tox-env.outputs.result }}-requirements.txt"
       - name: Install tox
         run: pip install tox
       - name: Get system information
