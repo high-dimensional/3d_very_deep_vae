@@ -30,15 +30,13 @@ jobs:
       - name: Copy requirements file
         shell: bash
         run: |
-          cp requirements/${{ steps.tox-env.outputs.result }}-requirements.txt .
+          cp requirements/${{ steps.tox-env.outputs.result }}-requirements.txt requirements.txt
           ls -R
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python }}
           cache: "pip"
-          cache-dependency-path: |
-            "${{ steps.tox-env.outputs.result }}-requirements.txt"
       - name: Install tox
         run: pip install tox
       - name: Get system information
