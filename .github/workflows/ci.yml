@@ -32,7 +32,8 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: "pip"
-          cache-dependency-path: "requirements/${{ steps.tox-env.result }}-requirements.txt"
+          cache-dependency-path: |
+            "requirements/${{ steps.tox-env.outputs.result }}-requirements.txt"
       - name: Install tox
         run: pip install tox
       - name: Get system information
@@ -44,7 +45,7 @@ jobs:
           pip --version
           tox --version
       - name: Run tests
-        run: tox -v -e ${{ steps.tox-env.result }}
+        run: tox -v -e ${{ steps.tox-env.outputs.result }}
         
   checks:
     runs-on: ubuntu-latest
