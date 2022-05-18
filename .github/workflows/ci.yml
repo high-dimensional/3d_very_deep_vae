@@ -13,8 +13,8 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        fail-fast: false
         python: ["3.7", "3.8", "3.9"]
     name: Run tests with Python ${{ matrix.python }}
     steps:
@@ -46,19 +46,19 @@ jobs:
       - name: Run tests
         run: tox -v -e ${{ steps.tox-env.result }}
         
-    checks:
-      runs-on: ubuntu-latest
-      strategy:
-        fail-fast: false
-      name: Run checks with Python 3.9
-      steps:
-        - uses: actions/checkout@v3
-        - name: Setup Python
-          uses: actions/setup-python@v3
-          with:
-            python-version: "3.9"
-        - name: Install tox
-          run: pip install tox
-        - name: Run checks
-          run: tox -v -e check
+  checks:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    name: Run checks with Python 3.9
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.9"
+      - name: Install tox
+        run: pip install tox
+      - name: Run checks
+        run: tox -v -e check
     
