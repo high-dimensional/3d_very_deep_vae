@@ -4,3 +4,4 @@ include CITATION.cff
 recursive-exclude .idea *
 recursive-include example_configurations *.json
 recursive-include scripts *.py
+recursive-include tests *.py
