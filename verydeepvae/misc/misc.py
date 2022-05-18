@@ -37,10 +37,10 @@ def count_gradient_nans(
 ):
     """
     :param bottom_up_graph_1:
-    :param top_down_graph: 
-    :param iteration: 
-    :param hyper_params: 
-    :return: 
+    :param top_down_graph:
+    :param iteration:
+    :param hyper_params:
+    :return:
     """
     grad_norm_td3 = None
 
@@ -128,13 +128,15 @@ def int_if_not_nan(x):
 
 def gaussian_likelihood(batch_target_features, x_mu, x_var, x_log_var, hyper_params):
     """
-    log_likelihood_per_dim, squared_diff_normed = gaussian_likelihood(batch_target_features, x_mu, x_std, x_log_var, hyper_params)
-    :param batch_target_features: 
-    :param x_mu: 
-    :param x_std: 
-    :param x_log_var: 
-    :param hyper_params: 
-    :return: 
+    log_likelihood_per_dim, squared_diff_normed = gaussian_likelihood(
+        batch_target_features, x_mu, x_std, x_log_var, hyper_params
+    )
+    :param batch_target_features:
+    :param x_mu:
+    :param x_std:
+    :param x_log_var:
+    :param hyper_params:
+    :return:
     """
     if "use_abs_not_square" in hyper_params and hyper_params["use_abs_not_square"]:
         squared_difference = torch.abs(batch_target_features - x_mu)
@@ -168,8 +170,12 @@ def gaussian_output(
     data_dictionary_x_mu, top_down_graph, hyper_params, num_modalities=1
 ):
     """
-    x_mu, x_std, x_var, x_log_var = gaussian_output(data_dictionary_x_mu, top_down_graph, hyper_params, num_modalities=1)
-    x_mu, x_std, x_var, x_log_var = gaussian_output(data_dictionary_x_mu, top_down_graph, hyper_params, num_modalities=2)
+    x_mu, x_std, x_var, x_log_var = gaussian_output(
+        data_dictionary_x_mu, top_down_graph, hyper_params, num_modalities=1
+    )
+    x_mu, x_std, x_var, x_log_var = gaussian_output(
+        data_dictionary_x_mu, top_down_graph, hyper_params, num_modalities=2
+    )
     :param data_dictionary_x_mu:
     :param top_down_graph:
     :param hyper_params:
@@ -268,7 +274,7 @@ class dummy_context_mgr:
 
 def kl_perturbed_prior(delta_mu, delta_log_var, log_var):
     """
-    This is kl[N(mu+delta_mu, exp(log_var)exp(delta_log_var)) || N(mu, exp(log_var)] 
+    This is kl[N(mu+delta_mu, exp(log_var)exp(delta_log_var)) || N(mu, exp(log_var)]
     """
     vars = torch.exp(log_var)
     delta_vars = torch.exp(delta_log_var)
@@ -288,8 +294,6 @@ def kl_log_vars(mu, log_var, mu_2=None, log_var_2=None):
     We parametrise in terms of the log variance to avoid (unstable!) square roots and logarithms. Exp is cool though.
     """
     vars = torch.exp(log_var)
-
-    eps = torch.tensor(1e-5)
 
     if mu_2 is None:
         # KL between a given (diagonal) Gaussian and N(0,I)

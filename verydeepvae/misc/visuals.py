@@ -1,12 +1,13 @@
 import numpy as np
 import matplotlib as mpl
-
-mpl.use("AGG")
 import matplotlib.pyplot as plt
 import sys
 import os
 import nibabel as nib
 from mpl_toolkits.axes_grid1 import ImageGrid
+
+
+mpl.use("AGG")
 
 
 def norm_zero_to_one(input, return_min_max_pair=False, input_min_max_pairs=None):
@@ -269,7 +270,8 @@ def plot_error_curves(
     ylabel=None,
 ):
     """
-    Plot each curve in the list data (each of which is in [x axis, y axis] format) on the same axes.
+    Plot each curve in the list data (each of which is in [x axis, y axis] format) on
+    the same axes.
     """
     plt.close("all")
     plt.figure()
@@ -285,8 +287,6 @@ def plot_error_curves(
         plt.ylabel(ylabel)
 
     plt.grid()
-
-    css_blacklist = []
 
     # colours = mcolors.CSS4_COLORS
     colours = ["b", "g", "r", "c", "m", "y", "k"] * 8
@@ -316,7 +316,8 @@ def plot_error_curves(
         appendage = " (current: " + str(current_val) + ", min: " + str(min_val) + ")"
 
         # current_title = plot_titles[k]
-        # plt.plot(current_data[:, 0], current_data[:, 1], 'o-', color=current_colour, label=current_label + appendage,
+        # plt.plot(current_data[:, 0], current_data[:, 1], 'o-', color=current_colour,
+        #          label=current_label + appendage,
         #          ls=current_style)
         plt.plot(
             current_data[:, 0],
@@ -325,7 +326,8 @@ def plot_error_curves(
             label=current_label + appendage,
             ls=current_style,
         )
-        # plt.plot(current_data[:, 0], current_data[:, 1], 'o-', color=current_colour, label=current_label + appendage)
+        # plt.plot(current_data[:, 0], current_data[:, 1], 'o-', color=current_colour,
+        #          label=current_label + appendage)
 
     plt.legend(loc="best")
     plt.suptitle(plot_title, fontsize=10)
@@ -475,7 +477,8 @@ def plot_2d(
     norm_recons=False,
 ):
     """
-    Given a list of numpy arrays, and corresponding titles, this function plots a selection of each
+    Given a list of numpy arrays, and corresponding titles, this function plots a
+    selection of each
     """
     plt.close("all")
     plot_types = len(data_to_plot)

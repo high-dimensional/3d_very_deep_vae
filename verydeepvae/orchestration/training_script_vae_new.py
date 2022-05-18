@@ -11,7 +11,7 @@ from ..misc import visuals
 from ..misc import misc
 from ..misc import environment
 from ..orchestration import one_epoch
-from monai.data import DataLoader, Dataset
+from monai.data import Dataset
 from ..graphs.vdeepvae_bottom_up_graph_translator import Graph as BottomUpGraph
 from ..graphs.vdeepvae_top_down_graph_translator import Graph as TopDownGraph
 from torch.utils.data.distributed import DistributedSampler
@@ -25,15 +25,14 @@ import monai
 def main(hyper_params):
     """
     This script coordinates everything!
-    """
 
-    """
-    Reproducability...
-    Take another look at this: https://albertcthomas.github.io/good-practices-random-number-generators/
-    
-    monai.utils.set_determinism(seed=True) results in each process applying the same augmentation functions, which is
-    wrong but not fatal...
-    
+    Reproducibility...
+    Take another look at this:
+    https://albertcthomas.github.io/good-practices-random-number-generators/
+
+    monai.utils.set_determinism(seed=True) results in each process applying the same
+    augmentation functions, which is wrong but not fatal...
+
     Setting torch.manual_seed doesn't seem to make a difference
     """
     random_seed = hyper_params.get("random_seed", 666)
@@ -149,21 +148,17 @@ def main(hyper_params):
                 eids_abnormal = [f for f in eids if f in eids_abnormal]
                 misc.print_0(
                     hyper_params,
-                    f"Number of normals: {str(len(eids_normal))}; number of abnormals: {str(len(eids_abnormal))}",
+                    (
+                        f"Number of normals: {str(len(eids_normal))}; "
+                        f"number of abnormals: {str(len(eids_abnormal))}"
+                    ),
                 )
 
                 filenames_flair = [
                     f for f in filenames_flair if f.split("_")[0] in eids_normal
                 ]
-                filenames_seg = [
-                    f.replace("_flair.nii", "_seg.nii") for f in filenames_flair
-                ]
-
                 nifti_paths_flair = [
                     hyper_params["nifti_dir"] / name for name in filenames_flair
-                ]
-                nifti_paths_seg = [
-                    hyper_params["nifti_dir"] / name for name in filenames_seg
                 ]
 
             nifti_b1000_filenames = filenames_flair
@@ -675,8 +670,9 @@ def main(hyper_params):
         loss_history_val_loss = []
         loss_history_val_nll_bits_per_dim = []
 
-    for epoch in range(starting_epoch, hyper_params['total_epochs'] + 1):
-        torch.cuda.empty_cache()  # Reduces risk of memory leaks after repeated computation of recons, samples etc
+    for epoch in range(starting_epoch, hyper_params["total_epochs"] + 1):
+        # Reduce risk of memory leaks after repeated computation of recons, samples etc
+        torch.cuda.empty_cache()
 
         sampler_train.set_epoch(epoch)  # Shuffle each epoch
 
@@ -1063,7 +1059,8 @@ def main(hyper_params):
                         to_plot_std = [current_input]
                         titles_std = ["input: current_input"]
 
-                    # Tell the top down block which resolutions it should sample from the posterior
+                    # Tell the top down block which resolutions it should sample from
+                    # the posterior
                     for min in range(1, 1 + len(hyper_params["channels_per_latent"])):
                         max = len(hyper_params["channels_per_latent"])
 
@@ -1187,7 +1184,8 @@ def main(hyper_params):
                                     and hyper_params["predict_x_var"]
                                 ):
                                     titles_std += [
-                                        "STD[p(current_input | z)]. Imputing latents above "
+                                        "STD[p(current_input | z)]. "
+                                        + "Imputing latents above "
                                         + res
                                         + " cubed using the prior"
                                     ]
@@ -1202,7 +1200,8 @@ def main(hyper_params):
                                     and hyper_params["predict_x_var"]
                                 ):
                                     titles_std += [
-                                        "STD[p(current_input | z)].\nImputing latents above "
+                                        "STD[p(current_input | z)].\n"
+                                        + "Imputing latents above "
                                         + res
                                         + "\nsquared using the prior"
                                     ]
@@ -1295,15 +1294,16 @@ def main(hyper_params):
                             norm_recons=True,
                         )
 
-                    #############################################################################################
-                    #############################################################################################
-                    #############################################################################################
-                    #############################################################################################
+                    ####################################################################
+                    ####################################################################
+                    ####################################################################
+                    ####################################################################
 
                     # Now we create samples!
                     misc.print_0(hyper_params, "\nComputing samples")
                     if not is_3d:
-                        times_to_sample = 1  # In 2D, we compute all samples in one forward pass (per GPU)
+                        # In 2D, we compute all samples in one forward pass (per GPU)
+                        times_to_sample = 1
                     elif "times_to_sample" in hyper_params:
                         times_to_sample = hyper_params["times_to_sample"]
                     else:
@@ -1460,7 +1460,8 @@ def main(hyper_params):
                             del data_dictionary_latents
                             del data_dictionary_x_mu
 
-                    # data_dictionary_1 is left over from the recon logic and is used each time we sample
+                    # data_dictionary_1 is left over from the recon logic and is used
+                    # each time we sample
                     del data_dictionary_1
 
     writer.close()

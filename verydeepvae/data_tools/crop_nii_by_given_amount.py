@@ -1,4 +1,4 @@
-from typing import Any, Dict, Hashable, Mapping
+from typing import Dict, Hashable, Mapping
 from monai.config import NdarrayTensor
 from monai.config import KeysCollection
 from monai.transforms.compose import MapTransform

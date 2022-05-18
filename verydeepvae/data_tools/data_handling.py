@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import shutil
+from verydeepvae.misc.visuals import progress_bar
 
 
 """

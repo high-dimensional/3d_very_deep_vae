@@ -1,4 +1,4 @@
-from typing import Any, Dict, Hashable, Mapping, Union
+from typing import Dict, Hashable, Mapping, Union
 import numpy as np
 import torch
 from monai.config import KeysCollection

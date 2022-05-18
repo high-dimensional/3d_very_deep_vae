@@ -2,10 +2,9 @@ import os
 import torch
 import numpy as np
 from torch.utils.data import Dataset
-from PIL import Image
+from PIL import Image, ImageOps
 
 Image.MAX_IMAGE_PIXELS = None
-from PIL import ImageOps
 
 
 class JPEGDataset(Dataset):
@@ -36,10 +35,8 @@ class JPEGDataset(Dataset):
 
         try:
             img = ImageOps.grayscale(img)
-        except:
-            print("Error")
-            print(file_path)
-            quit()
+        except Exception as e:
+            raise Exception(f"Error converting file {file_path}") from e
 
         # # # Clamp
         # # min = np.percentile(img, 0.05)
@@ -71,15 +68,15 @@ class JPEGDataset(Dataset):
         img = torch.from_numpy(img)
 
         if self.metadata is None:
-            l = np.zeros_like(1)
+            label = np.zeros_like(1)
         else:
-            l = (
+            label = (
                 self.metadata.loc[self.metadata["image_id"] == file_id]
                 .to_numpy()[:, 1:]
                 .astype(np.int8)
             )
-            l = np.squeeze(l)
-            l = (l + 1) // 2
-            l = l[self.attr_to_keep]
+            label = np.squeeze(label)
+            label = (label + 1) // 2
+            label = label[self.attr_to_keep]
 
-        return img, l
+        return img, label

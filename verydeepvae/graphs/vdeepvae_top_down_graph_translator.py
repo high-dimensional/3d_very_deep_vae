@@ -276,7 +276,6 @@ class Graph:
 
             # lateral_connection_channels = hyper_params['channels'][-k-1]
             lateral_connection_channels = hyper_params["channels"][-k - 2]
-            depth = len(channels) - k - 1
             latents_to_use = latents_per_chanel[k + 1]
             # latents_to_use = 1
             shared_group_ops = None
