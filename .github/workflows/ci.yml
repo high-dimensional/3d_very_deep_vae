@@ -25,7 +25,7 @@ jobs:
         with:
           script: |
             let version_code = '${{ matrix.python }}'.split('.').join('');
-            return `py-${version_code}-linux`;
+            return `py${version_code}-linux`;
           result-encoding: string
       - name: Setup Python
         uses: actions/setup-python@v3
