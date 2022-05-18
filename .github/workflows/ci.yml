@@ -1,0 +1,68 @@
+
+name: Continuous integration
+
+on:
+  push:
+    branches: "main"
+  pull_request:
+  schedule:
+    - cron: 0 0 * * 0
+
+jobs:
+
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.7", "3.8", "3.9"]
+    name: Run tests with Python ${{ matrix.python }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get tox environment name
+        id: tox-env
+        uses: actions/github-script@v4
+        with:
+          script: |
+            let version_code = '${{ matrix.python }}'.split('.').join('');
+            return `py${version_code}-linux`;
+          result-encoding: string
+      - name: Copy requirements file
+        shell: bash
+        run: |
+          cp requirements/${{ steps.tox-env.outputs.result }}-requirements.txt requirements.txt
+          ls -R
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python }}
+          cache: "pip"
+      - name: Install tox
+        run: pip install tox
+      - name: Get system information
+        run: |
+          set -x
+          uname -a
+          lsb_release -a
+          python --version
+          pip --version
+          tox --version
+      - name: Run tests
+        run: tox -v -e ${{ steps.tox-env.outputs.result }}
+        
+  checks:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    name: Run checks with Python 3.9
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.9"
+      - name: Install tox
+        run: pip install tox
+      - name: Run checks
+        run: tox -v -e check
+    
