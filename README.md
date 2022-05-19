@@ -1,5 +1,7 @@
 # `3d_very_deep_vae`
 
+[![Continuous integration](https://github.com/high-dimensional/3d_very_deep_vae/actions/workflows/ci.yml/badge.svg)](https://github.com/high-dimensional/3d_very_deep_vae/actions/workflows/ci.yml)
+
 [PyTorch](https://pytorch.org/) implementations of [variational autoencoder models](https://en.wikipedia.org/wiki/Variational_autoencoder) for generating synthetic three-dimensional images based on neuroimaging training data.
 
 ## Installation
