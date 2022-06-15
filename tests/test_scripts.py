@@ -162,7 +162,7 @@ def configuration_dict():
         {"save_recons_to_mat": True},
         {"shuffle_nifitis": True},
     ],
-    ids=lambda d: ",".join(f"{k}={v}" for k, v in d.items()) if d else "base"
+    ids=lambda d: ",".join(f"{k}={v}" for k, v in d.items()) if d else "base",
 )
 def test_generate_synthetic_data_and_train_vae_model(
     tmp_path_factory, configuration_dict, configuration_updates
