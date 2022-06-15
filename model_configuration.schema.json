@@ -1,0 +1,423 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/high-dimensional/3d_very_deep_vae/model_configuration.schema.json",
+    "title": "Model configuration",
+    "description": "Configuration of a very deep variational autoencoder model and training run",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "total_epochs": {
+            "description": "Total number of epochs to train model for",
+            "type": "integer",
+            "exclusiveMinimum": 0
+        },
+        "batch_size": {
+            "description": "Number of training points in each minibatch",
+            "type": "integer",
+            "exclusiveMinimum": 0
+        },
+        "nii_target_shape": {
+            "description": "Resolution of training images along each dimension",
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+            },
+            "minItems": 3,
+            "maxItems": 3
+        },
+        "channels": {
+            "description": "",
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+            }
+        },
+        "channels_hidden": {
+            "description": "",
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+            }
+        },
+        "kernel_sizes_bottom_up": {
+            "description": "",
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+            }
+        },
+        "channels_top_down": {
+            "description": "",
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+            }
+        },
+        "channels_hidden_top_down": {
+            "description": "",
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+            }
+        },
+        "latents_per_channel": {
+            "description": "",
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+            }
+        },
+        "channels_per_latent": {
+            "description": "",
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+            }
+        },
+        "kernel_sizes_top_down": {
+            "description": "",
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+            }
+        },
+        "warmup_iterations": {
+            "description": "",
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "default": 50
+        },
+        "plot_recons_period": {
+            "description": "",
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "default": 1
+        },
+        "subjects_to_plot": {
+            "description": "",
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "default": 4
+        },
+        "validation_period": {
+            "description": "",
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "default": 1
+        },
+        "save_period": {
+            "description": "",
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "default": 1
+        },
+        "l2_reg_coeff": {
+            "description": "Coefficient scaling L2 regularization term in objective",
+            "type": "number",
+            "minimum": 0,
+            "default": 1e-4
+        },
+        "learning_rate": {
+            "description": "Scalar controlling magnitude of stochastic gradient steps",
+            "type": "number",
+            "minimum": 0,
+            "default": 1e-3
+        },
+        "train_frac": {
+            "description": "Fraction of data to use for training with remainder used for validation",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.95
+        },
+        "gradient_clipping_value": {
+            "description": "",
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "default": 1e2
+        },
+        "gradient_skipping_value": {
+            "description": "",
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "default": 1e12
+        },
+        "sequence_type": {
+            "description": "",
+            "type": "string",
+            "enum": ["flair", "dwi"],
+            "default": "flair"
+        },
+        "likelihood": {
+            "description": "",
+            "type": "string",
+            "enum": ["Gaussian", "Bernoulli"],
+            "default": "Gaussian"
+        },
+        "variance_hidden_clamp_bounds": {
+            "description": "",
+            "type": "array",
+            "items": {
+                "type": "number",
+                "minimum": 0
+            },
+            "minItems": 2,
+            "maxItems": 2,
+            "default": [0.001, 1]
+        },
+        "variance_output_clamp_bounds": {
+            "description": "",
+            "type": "array",
+            "items": {
+                "type": "number",
+                "minimum": 0
+            },
+            "minItems": 2,
+            "maxItems": 2,
+            "default": [0.01, 1]
+        },
+        "latents_per_channel_weight_sharing": {
+            "description": "",
+            "oneOf": [
+                {
+                    "type": "string",
+                    "enum": ["none", "all"]
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "boolean"
+                    },
+                    "minItems": 1
+                }
+            ],
+            "default": "none"
+        },
+        "latents_to_use": {
+            "description": "",
+            "oneOf": [
+                {
+                    "type": "string",
+                    "enum": ["none", "all"]
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "boolean"
+                    },
+                    "minItems": 1
+                }
+            ],
+            "default": "all"
+        },
+        "latents_to_optimise": {
+            "description": "",
+            "oneOf": [
+                {
+                    "type": "string",
+                    "enum": ["none", "all"]
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "boolean"
+                    },
+                    "minItems": 1
+                }
+            ],
+            "default": "all"
+        },
+        "half_precision": {
+            "description": "Whether to train model using 16-bit floating point precision",
+            "type": "boolean",
+            "default": false
+        },
+        "print_model": {
+            "description": "Whether to display text representation of model at start of training",
+            "type": "boolean",
+            "default": false
+        },
+        "use_tanh_output": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "new_model": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "use_abs_not_square": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "plot_gradient_norms": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "apply_mask_in_input_space": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "include_mask_in_loader": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "resume_from_checkpoint": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "restore_optimiser": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "keep_every_checkpoint": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "predict_x_var": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "use_precision_reweighting": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "verbose": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "bottleneck_resnet_encoder": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "normalise_weight_by_depth": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "zero_biases": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "use_rezero": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "veto_batch_norm": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "veto_transformations": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "use_nii_data": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "nifti_standardise": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "shuffle_niftis": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "save_recons_to_mat": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "use_DDP": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "convolutional_downsampling": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "predict_x_var_with_sigmoid": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "base_recons_on_train_loader": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "only_use_one_conv_block_at_top": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "separate_hidden_loc_scale_convs": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "separate_output_loc_scale_convs": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "discard_abnormally_small_niftis": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        },
+        "apply_augmentations_to_validation_set": {
+            "description": "",
+            "type": "boolean",
+            "default": false
+        },
+        "visualise_training_pipeline_before_starting": {
+            "description": "",
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "required": [
+        "total_epochs", 
+        "batch_size", 
+        "nii_target_shape", 
+        "channels",
+        "kernel_sizes_bottom_up",
+        "channels_hidden",
+        "channels_top_down",
+        "channels_hidden_top_down",
+        "latents_per_channel",
+        "channels_per_latent",
+        "kernel_sizes_top_down"
+    ]
+}

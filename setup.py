@@ -16,6 +16,7 @@ install_requires = [
     "tensorboard==2.7.0",
     "torchio==0.18.57",
     "tqdm==4.62.3",
+    "jsonschema==4.2.1",
 ]
 
 # CUDA builds of torch & torchvision packages are required therefore we install directly
