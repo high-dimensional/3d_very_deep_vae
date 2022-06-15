@@ -1,2 +1,4 @@
 # Migrate code style to Black
 c244f7c1350e6d54bb11cfb36c619d4683fdc991
+# Update Black autoformatting to v22.3.0
+7d0f26e3c579fc0433b0585881d74b21b474f314
