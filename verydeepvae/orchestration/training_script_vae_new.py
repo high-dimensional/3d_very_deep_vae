@@ -934,4 +934,5 @@ def main(hyper_params):
                     # data_dictionary_1 is left over from the recon logic and is used each time we sample
                     del data_dictionary_1
 
-    writer.close()
+    if writer is not None:
+        writer.close()
