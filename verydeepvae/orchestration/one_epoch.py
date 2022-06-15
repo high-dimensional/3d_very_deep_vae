@@ -119,12 +119,14 @@ def go(input_dict):
                 )
 
             else:
-                log_likelihood_per_dim = -torch.nn.functional.binary_cross_entropy_with_logits(
-                    input=logits.reshape(logits.shape[0], -1),
-                    target=batch_target_features.reshape(
-                        batch_target_features.shape[0], -1
-                    ),
-                    reduction="none",
+                log_likelihood_per_dim = (
+                    -torch.nn.functional.binary_cross_entropy_with_logits(
+                        input=logits.reshape(logits.shape[0], -1),
+                        target=batch_target_features.reshape(
+                            batch_target_features.shape[0], -1
+                        ),
+                        reduction="none",
+                    )
                 )
                 squared_difference = torch.mean(-log_likelihood_per_dim)
                 log_likelihood_per_dim = log_likelihood_per_dim.reshape(

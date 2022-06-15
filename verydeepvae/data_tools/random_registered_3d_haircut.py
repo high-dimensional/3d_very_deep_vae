@@ -5,8 +5,7 @@ from monai.transforms.compose import MapTransform, Randomizable
 
 
 class ThreeDHaircut(Randomizable, MapTransform):
-    """
-    """
+    """ """
 
     def __init__(
         self, keys: KeysCollection, range, axis: int = 2, prob: float = 0.1

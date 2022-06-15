@@ -4,8 +4,7 @@ import torch.cuda.amp as amp
 
 
 class TanhBlock(nn.Module):
-    """
-    """
+    """ """
 
     def __init__(self, **kwargs):
         super().__init__()

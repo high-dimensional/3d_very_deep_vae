@@ -371,7 +371,7 @@ class TopDownBlock(nn.Module):
                     )
                     self.param_count += (
                         4
-                        * self.hidden_kernel_size ** d
+                        * self.hidden_kernel_size**d
                         * self.channels_hidden
                         * self.channels_hidden
                     )
@@ -538,7 +538,7 @@ class TopDownBlock(nn.Module):
                     self.param_count += dims_into_prior_predicter * self.channels_hidden
                     self.param_count += (
                         2
-                        * self.hidden_kernel_size ** d
+                        * self.hidden_kernel_size**d
                         * self.channels_hidden
                         * self.channels_hidden
                     )
@@ -750,7 +750,7 @@ class TopDownBlock(nn.Module):
                 self.param_count += 2 * dims_into_prior_predicter * self.channels_hidden
                 self.param_count += (
                     4
-                    * self.hidden_kernel_size ** d
+                    * self.hidden_kernel_size**d
                     * self.channels_hidden
                     * self.channels_hidden
                 )
@@ -909,7 +909,7 @@ class TopDownBlock(nn.Module):
                 self.param_count += dims_into_posterior_predicter * self.channels_hidden
                 self.param_count += (
                     2
-                    * self.hidden_kernel_size ** d
+                    * self.hidden_kernel_size**d
                     * self.channels_hidden
                     * self.channels_hidden
                 )

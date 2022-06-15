@@ -6,8 +6,7 @@ from monai.transforms.spatial.array import Resize
 
 
 class Anisotropiser(Randomizable, MapTransform):
-    """
-    """
+    """ """
 
     def __init__(
         self,

@@ -6,9 +6,7 @@ from monai.transforms.compose import MapTransform
 
 
 class Binariser(MapTransform):
-    """
-
-    """
+    """ """
 
     def __init__(self, keys: KeysCollection, min_val=0.5) -> None:
         """

@@ -12,8 +12,7 @@ class WrappedRandomGhosting(MapTransform):
     """
 
     def __init__(self, keys: KeysCollection, trans: None) -> None:
-        """
-        """
+        """ """
         super().__init__(keys)
 
         self._seed = 0

@@ -5,8 +5,7 @@ from monai.transforms.compose import MapTransform, Randomizable
 
 
 class LeaveRandomCube(Randomizable, MapTransform):
-    """
-    """
+    """ """
 
     def __init__(
         self, keys: KeysCollection, vol_shape=[64, 64, 64], min_cube_size=[64, 64, 64]

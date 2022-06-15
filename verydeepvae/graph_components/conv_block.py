@@ -190,10 +190,10 @@ class ConvBlock(nn.Module):
                 )
 
                 self.param_count += (
-                    self.hidden_kernel_size ** d * self.channels_in * self.channels_in
+                    self.hidden_kernel_size**d * self.channels_in * self.channels_in
                 )
                 self.param_count += (
-                    self.hidden_kernel_size ** d * self.channels_in * self.channels_out
+                    self.hidden_kernel_size**d * self.channels_in * self.channels_out
                 )
 
                 if "verbose" in self.hyper_params and self.hyper_params["verbose"]:
@@ -268,10 +268,10 @@ class ConvBlock(nn.Module):
                 )
 
                 self.param_count += (
-                    self.hidden_kernel_size ** d * self.channels_in * self.channels_out
+                    self.hidden_kernel_size**d * self.channels_in * self.channels_out
                 )
                 self.param_count += (
-                    self.hidden_kernel_size ** d * self.channels_out * self.channels_out
+                    self.hidden_kernel_size**d * self.channels_out * self.channels_out
                 )
 
                 if "verbose" in self.hyper_params and self.hyper_params["verbose"]:
@@ -338,12 +338,12 @@ class ConvBlock(nn.Module):
 
             self.param_count += self.channels_in * self.channels_hidden
             self.param_count += (
-                self.hidden_kernel_size ** d
+                self.hidden_kernel_size**d
                 * self.channels_hidden
                 * self.channels_hidden
             )
             self.param_count += (
-                self.hidden_kernel_size ** d
+                self.hidden_kernel_size**d
                 * self.channels_hidden
                 * self.channels_hidden
             )

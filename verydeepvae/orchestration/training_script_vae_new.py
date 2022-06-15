@@ -891,7 +891,7 @@ def main(hyper_params):
 
                     # Plot the separate KLs
                     dimensionalities = [
-                        ((2 ** p) ** 3) * q
+                        ((2**p) ** 3) * q
                         for p, q in zip(
                             range(len(hyper_params["channels_per_latent"])),
                             hyper_params["channels_per_latent"][::-1],
@@ -1078,7 +1078,7 @@ def main(hyper_params):
 
                             res_to_sample_from_prior = temp[::-1][min:]
                         else:
-                            res_to_sample_from_prior = [2 ** p for p in range(min, max)]
+                            res_to_sample_from_prior = [2**p for p in range(min, max)]
 
                         if hyper_params["use_nii_data"]:
                             # In this case use dictionaries
