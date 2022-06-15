@@ -2,7 +2,7 @@
 
 [![Continuous integration](https://github.com/high-dimensional/3d_very_deep_vae/actions/workflows/ci.yml/badge.svg)](https://github.com/high-dimensional/3d_very_deep_vae/actions/workflows/ci.yml)
 
-[PyTorch](https://pytorch.org/) implementations of [variational autoencoder models](https://en.wikipedia.org/wiki/Variational_autoencoder) for generating synthetic three-dimensional images based on neuroimaging training data.
+[PyTorch](https://pytorch.org/) implementation of (a streamlined version of) Rewon Child's ['Very deep' variational autoencoder (Child, R. Very Deep VAEs Generalize Autoregressive Models and Can Outperform Them on Images. In Proceedings of the 9th International Conference on Learning Representations (ICLR), 2021.)](https://arxiv.org/pdf/2011.10650.pdf),  [variational autoencoder models](https://en.wikipedia.org/wiki/Variational_autoencoder) for generating synthetic three-dimensional images based on neuroimaging training data.
 
 ## Installation
 
