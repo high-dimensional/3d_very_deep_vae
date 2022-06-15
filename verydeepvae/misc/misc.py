@@ -167,7 +167,11 @@ def gaussian_likelihood(batch_target_features, x_mu, x_var, x_log_var, hyper_par
 
 
 def gaussian_output(
-    data_dictionary_x_mu, top_down_graph, hyper_params, num_modalities=1
+    data_dictionary_x_mu,
+    data_dictionary_latents,
+    top_down_graph,
+    hyper_params,
+    num_modalities=1,
 ):
     """
     x_mu, x_std, x_var, x_log_var = gaussian_output(

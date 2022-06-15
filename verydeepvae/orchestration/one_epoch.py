@@ -104,7 +104,11 @@ def go(input_dict):
 
             if hyper_params["likelihood"] == "Gaussian":
                 x_mu, x_std, x_var, x_log_var = misc.gaussian_output(
-                    data_dictionary_x_mu, top_down_graph, hyper_params, num_modalities=1
+                    data_dictionary_x_mu,
+                    data_dictionary_latents,
+                    top_down_graph,
+                    hyper_params,
+                    num_modalities=1,
                 )
             else:
                 logits = data_dictionary_x_mu["data"]
