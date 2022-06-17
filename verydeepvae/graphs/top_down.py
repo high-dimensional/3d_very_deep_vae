@@ -12,7 +12,7 @@ from ..graph_components.sigmoid_first_n_channels_block import (
 )
 
 
-class Graph:
+class TopDownGraph:
     """
     This is the top down part of the very deep VAE graph.
     """

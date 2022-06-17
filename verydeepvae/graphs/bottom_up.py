@@ -4,7 +4,7 @@ from ..graph_components.pooling_block import PoolingBlock
 from ..graph_components.unpooling_block import UnPoolingBlock
 
 
-class Graph:
+class BottomUpGraph:
     """
     This is the bottom up part of the very deep VAE graph.
     Each 'ResBlock' is just a 'bottleneck resblock' from the original resnet paper (but with a pair of convs with 3x3

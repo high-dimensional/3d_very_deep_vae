@@ -12,8 +12,8 @@ from ..misc import misc
 from ..misc import environment
 from ..orchestration import one_epoch
 from monai.data import Dataset
-from ..graphs.vdeepvae_bottom_up_graph_translator import Graph as BottomUpGraph
-from ..graphs.vdeepvae_top_down_graph_translator import Graph as TopDownGraph
+from ..graphs.bottom_up import BottomUpGraph
+from ..graphs.top_down import TopDownGraph
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader
 import math as maths
