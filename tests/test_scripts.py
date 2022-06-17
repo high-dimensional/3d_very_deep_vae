@@ -76,7 +76,7 @@ def test_generate_synthetic_data_non_valid_resolution_fails(tmp_path, voxels_per
     ]
     completed_process = run_script("generate_synthetic_data.py", script_args)
     assert completed_process.returncode != 0
-    assert "voxels_per_image must be a positive power of two" in str(
+    assert "voxels_per_axis must be a positive power of two" in str(
         completed_process.stderr
     )
 
