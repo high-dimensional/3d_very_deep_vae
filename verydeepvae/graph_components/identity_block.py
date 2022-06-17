@@ -17,18 +17,24 @@ class IdentityBlock(nn.Module):
         self.hyper_params = kwargs["hyper_params"]
         self.param_count = 0
 
-        if 'data_is_3d' in self.hyper_params and self.hyper_params['data_is_3d']:
+        if "data_is_3d" in self.hyper_params and self.hyper_params["data_is_3d"]:
             ConvOp = nn.Conv3d
         else:
             ConvOp = nn.Conv2d
 
-        self.skip_con = ConvOp(in_channels=self.channels_in, out_channels=self.channels_out, kernel_size=1,
-                               stride=1, padding=0, bias=True)
+        self.skip_con = ConvOp(
+            in_channels=self.channels_in,
+            out_channels=self.channels_out,
+            kernel_size=1,
+            stride=1,
+            padding=0,
+            bias=True,
+        )
         self.param_count += self.channels_in * self.channels_out
 
     def forward(self, data_dictionary):
         with amp.autocast(enabled=self.kwargs["half_precision"]):
 
-            data_dictionary['data'] = self.skip_con(self.pad(data_dictionary['data']))
+            data_dictionary["data"] = self.skip_con(self.pad(data_dictionary["data"]))
 
         return data_dictionary

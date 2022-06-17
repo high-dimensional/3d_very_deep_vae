@@ -1,4 +1,4 @@
-from typing import Any, Dict, Hashable, Mapping
+from typing import Dict, Hashable, Mapping
 from monai.config import NdarrayTensor
 from monai.config import KeysCollection
 from monai.transforms.compose import MapTransform
@@ -19,12 +19,16 @@ class CropNIIByGivenAmount(MapTransform):
 
         self.crop_ranges = crop_ranges
 
-    def __call__(self, data: Mapping[Hashable, NdarrayTensor]) -> Dict[Hashable, NdarrayTensor]:
+    def __call__(
+        self, data: Mapping[Hashable, NdarrayTensor]
+    ) -> Dict[Hashable, NdarrayTensor]:
         d = dict(data)
         for key in self.keys:
-            d[key] = d[key][:,
-                     self.crop_ranges[0][0]:-self.crop_ranges[0][1],
-                     self.crop_ranges[1][0]:-self.crop_ranges[1][1],
-                     self.crop_ranges[2][0]:-self.crop_ranges[2][1]]
+            d[key] = d[key][
+                :,
+                self.crop_ranges[0][0] : -self.crop_ranges[0][1],
+                self.crop_ranges[1][0] : -self.crop_ranges[1][1],
+                self.crop_ranges[2][0] : -self.crop_ranges[2][1],
+            ]
 
         return d

@@ -6,14 +6,15 @@ from monai.transforms.spatial.array import Resize
 
 
 class Anisotropiser(Randomizable, MapTransform):
-    """
-    """
+    """ """
 
-    def __init__(self,
-                 keys: KeysCollection,
-                 scale_range,
-                 prob: float = 0.1,
-                 allow_missing_keys: bool = True) -> None:
+    def __init__(
+        self,
+        keys: KeysCollection,
+        scale_range,
+        prob: float = 0.1,
+        allow_missing_keys: bool = True,
+    ) -> None:
         """
         Args:
             keys: keys of the corresponding items to be transformed.
@@ -35,7 +36,9 @@ class Anisotropiser(Randomizable, MapTransform):
         self.scale = self.R.uniform(low=self.scale_range[0], high=self.scale_range[1])
         self._do_transform = self.R.random() < self.prob
 
-    def __call__(self, data: Mapping[Hashable, np.ndarray]) -> Dict[Hashable, np.ndarray]:
+    def __call__(
+        self, data: Mapping[Hashable, np.ndarray]
+    ) -> Dict[Hashable, np.ndarray]:
         d = dict(data)
         self.randomize()
         if not self._do_transform:

@@ -1,6 +1,7 @@
 graft requirements
 include tox.ini
 include CITATION.cff
+exclude .git-blame-ignore-revs
 recursive-exclude .idea *
 recursive-include example_configurations *.json
 recursive-include scripts *.py

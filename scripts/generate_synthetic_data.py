@@ -8,6 +8,7 @@ import nibabel as nb
 import tqdm
 from scipy.ndimage import gaussian_filter
 
+
 def generate_synthetic_voxels(rng, args):
     shape = (args.voxels_per_axis,) * 3
     voxels = gaussian_filter(
@@ -26,7 +27,7 @@ def generate_synthetic_voxels(rng, args):
     ) - np.array(((args.voxels_per_axis - 1) / 2,) * 3)
     rotated_voxel_coords = voxel_coords @ random_rotation_matrix
     ellipse_mask = (
-        np.sum(rotated_voxel_coords ** 2 / principle_axes_half_lengths ** 2, -1) < 1
+        np.sum(rotated_voxel_coords**2 / principle_axes_half_lengths**2, -1) < 1
     )
     voxels[ellipse_mask] += rng.uniform(*args.ellipsoid_increment_interval)
     voxels /= voxels.max()

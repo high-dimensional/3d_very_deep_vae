@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import shutil
+from verydeepvae.misc.visuals import progress_bar
 
 
 """
@@ -17,11 +18,12 @@ def delete_directory_contents(dir):
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)
         except Exception as e:
-            print('Failed to empty directory %s. Reason: %s' % (file_path, e))
+            print("Failed to empty directory %s. Reason: %s" % (file_path, e))
 
 
 def save_to_mat(dictionary, filepath):
     import scipy.io as sio
+
     file_handler = open(filepath, "wb")
     sio.savemat(file_handler, mdict=dictionary, do_compression=False)
     file_handler.close()
@@ -43,7 +45,7 @@ def compute_min_max_from_loader(data_loader):
             if min_new < min:
                 min = min_new
         count += 1
-        progress_bar(count, len(data_loader), prefix='Computing min/max:')
+        progress_bar(count, len(data_loader), prefix="Computing min/max:")
 
     print("Min/max: {:.2f}/{:.2f}".format(min, max))
     return min, max

@@ -10,11 +10,9 @@ class ClampByPercentile(MapTransform):
     the signal.
     """
 
-    def __init__(self,
-                 keys: KeysCollection,
-                 lower: None,
-                 upper: None,
-                 allow_missing_keys = True) -> None:
+    def __init__(
+        self, keys: KeysCollection, lower: None, upper: None, allow_missing_keys=True
+    ) -> None:
         """
         Args:
             keys: keys of the corresponding items to be transformed.
@@ -28,7 +26,9 @@ class ClampByPercentile(MapTransform):
         self.upper = upper
         self.allow_missing_keys = allow_missing_keys
 
-    def __call__(self, data: Mapping[Hashable, np.ndarray]) -> Dict[Hashable, np.ndarray]:
+    def __call__(
+        self, data: Mapping[Hashable, np.ndarray]
+    ) -> Dict[Hashable, np.ndarray]:
         d = dict(data)
 
         for key in self.keys:

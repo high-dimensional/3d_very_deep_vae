@@ -1,4 +1,4 @@
-from typing import Any, Dict, Hashable, Mapping, Union
+from typing import Dict, Hashable, Mapping, Union
 import numpy as np
 import torch
 from monai.config import KeysCollection
@@ -6,9 +6,7 @@ from monai.transforms.compose import MapTransform
 
 
 class Binariser(MapTransform):
-    """
-
-    """
+    """ """
 
     def __init__(self, keys: KeysCollection, min_val=0.5) -> None:
         """
