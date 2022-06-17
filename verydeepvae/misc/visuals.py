@@ -3,7 +3,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import sys
 import os
-import nibabel as nib
 from mpl_toolkits.axes_grid1 import ImageGrid
 
 
@@ -33,75 +32,6 @@ def progress_bar(iteration, total, prefix="", suffix="", decimals=2, bar_length=
     bar = "#" * filled_length + "-" * (bar_length - filled_length)
     sys.stdout.write("\r%s |%s| %s%s %s" % (prefix, bar, percents, "%", suffix)),
     sys.stdout.flush()
-
-
-def plot_slices(subplot_position, volume, title=None):
-    inc = int(0.25 * volume.shape[1])  # Gives 3 slices per axis
-    for axis in range(3):
-        for slice_number in range(3):
-            indices = [slice(None)] * len(volume.shape)
-            indices[axis] = inc * (slice_number + 1)
-            current_slice = volume[tuple(indices)]
-
-            subplot_position += +1
-            plt.subplot(3, 9, subplot_position)
-            plt.imshow(current_slice, cmap="gray")
-            plt.axis("off")
-            if title is not None and axis == slice_number == 1:
-                plt.title(title)
-    return subplot_position
-
-
-def plot_3d_recons(originals, recons, epoch, recon_folder):
-    subjects_to_show = min(originals.shape[0], 5)
-
-    prog_bar_counter = 0
-    for s in range(subjects_to_show):
-        plt.close("all")
-        plt.suptitle("Subject " + str(s + 1) + "; epoch: " + str(epoch), fontsize=20)
-        fig = plt.gcf()
-        fig.set_size_inches(24, 14)
-        plt.subplots_adjust(top=0.95)
-
-        current_input = np.squeeze(originals[s], 0)
-        current_recon = np.squeeze(recons[s], 0)
-        # current_input = np.squeeze(originals[s])
-        # current_recon = np.squeeze(recons[s])
-        current_diff = np.abs(current_input - current_recon)
-
-        plot_slices(
-            plot_slices(
-                plot_slices(0, current_input, "Original"),
-                current_recon,
-                "Reconstruction",
-            ),
-            current_diff,
-            "Absolute difference",
-        )
-
-        fig.tight_layout()
-        plt.savefig(os.path.join(recon_folder, "subject_" + str(s + 1) + ".png"))
-
-        prog_bar_counter += 1
-        progress_bar(
-            prog_bar_counter, subjects_to_show, prefix="Plotting 3D reconstructions:"
-        )
-
-
-def save_niis(data_to_save, titles, recon_folder, subjects_to_show=5, prefix=""):
-    """
-    Save a nifti of each item in the list 'data_to_save'
-    """
-    for i in range(subjects_to_show):
-
-        current_nii_dir = recon_folder + "/subject_" + str(i + 1) + "/"
-        if not os.path.isdir(current_nii_dir):
-            os.mkdir(current_nii_dir)
-
-        for j in range(len(data_to_save)):
-            current = np.squeeze(data_to_save[j][i])
-            nft_img = nib.Nifti1Image(current, np.eye(4))
-            nib.save(nft_img, current_nii_dir + "/" + prefix + titles[j] + ".nii.gz")
 
 
 def plot_one_slice(
@@ -348,35 +278,6 @@ def plot_error_curves(
             plt.savefig(os.path.join(recon_folder, prefix + "_" + postifx + ".png"))
 
 
-def plot_2d_samples(samples, epoch, recon_folder, is_colour=False):
-    plt.close("all")
-    total = np.shape(samples)[0]
-    side_length = min(5, int(np.sqrt(total)))
-
-    counter = 0
-    fig, a = plt.subplots(side_length, side_length)
-    for i in range(side_length):
-        for j in range(side_length):
-            counter += 1
-            current_input = np.squeeze(samples[counter])
-            current_input = norm_zero_to_one(current_input)
-            if is_colour:
-                # current_input = np.transpose(current_input, [2, 1, 0])
-                current_input = np.transpose(current_input, [1, 2, 0])
-                a[i][j].imshow(current_input)
-                a[i][j].axis("off")
-            else:
-                a[i][j].imshow(current_input)
-                a[i][j].axis("off")
-
-    plt.suptitle("Samples at epoch " + str(epoch), fontsize=10)
-    fig = plt.gcf()
-    fig.set_size_inches(24, 14)
-    fig.tight_layout()
-    plt.subplots_adjust(top=0.95)
-    plt.savefig(os.path.join(recon_folder, "samples.png"))
-
-
 def image_grid(
     data_to_plot,
     epoch,
@@ -432,38 +333,6 @@ def image_grid(
 
     plt.suptitle("Samples at epoch: " + str(epoch), fontsize=10)
     plt.savefig(os.path.join(recon_folder, filename + ".png"))
-
-
-def plot_3d_samples(samples, epoch, recon_folder):
-    plt.close("all")
-    subjects_to_show = min(samples.shape[0], 5)
-
-    for s in range(subjects_to_show):
-        subplot_position = s * 9  # 9 = 3 coronal + 3 sagittal + 3 axial
-        current_input = np.squeeze(samples[s], 0)
-        inc = int(0.25 * current_input.shape[1])  # Gives 3 slices per axis
-
-        for axis in range(3):
-            for slice_number in range(3):
-                indices = [slice(None)] * len(current_input.shape)
-                indices[axis] = inc * (slice_number + 1)
-                current_slice = current_input[tuple(indices)]
-
-                subplot_position += +1
-                plt.subplot(subjects_to_show, 9, subplot_position)
-                plt.imshow(current_slice, cmap="gray")
-                plt.axis("off")
-                if (
-                    axis == slice_number == 1
-                ):  # This slice is in the middle of the row of slices
-                    plt.title("Sample " + str(s + 1))
-
-    plt.suptitle("Samples at epoch " + str(epoch), fontsize=10)
-    fig = plt.gcf()
-    fig.set_size_inches(24, 14)
-    fig.tight_layout()
-    plt.subplots_adjust(top=0.95)
-    plt.savefig(os.path.join(recon_folder, "samples.png"))
 
 
 def plot_2d(
