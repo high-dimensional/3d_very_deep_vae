@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/high-dimensional/3d_very_deep_vae/model_configuration.schema.json",
     "title": "Model configuration",
-    "description": "Configuration of a very deep variational autoencoder model and training run",
+    "description": "Schema for JSON file specifying configuration of a very deep variational autoencoder model and training run",
     "type": "object",
     "additionalProperties": false,
     "properties": {
@@ -16,26 +16,13 @@
             "type": "integer",
             "exclusiveMinimum": 0
         },
-        "nii_target_shape": {
-            "description": "Resolution of training images along each dimension",
-            "type": "array",
-            "items": {
-                "type": "integer",
-                "exclusiveMinimum": 0
-            },
-            "minItems": 3,
-            "maxItems": 3
+        "resolution": {
+            "description": "Resolution of (volumetric) images to train model to generate along all dimensions. Must be an integer power of 2.",
+            "type": "integer",
+            "exclusiveMinimum": 0
         },
         "channels": {
-            "description": "",
-            "type": "array",
-            "items": {
-                "type": "integer",
-                "exclusiveMinimum": 0
-            }
-        },
-        "channels_hidden": {
-            "description": "",
+            "description": "Number of output channels in the encoder's residual network (ResNet) blocks. Length must be equal to base-2 logarithm of `resolution` plus one.",
             "type": "array",
             "items": {
                 "type": "integer",
@@ -43,39 +30,7 @@
             }
         },
         "kernel_sizes_bottom_up": {
-            "description": "",
-            "type": "array",
-            "items": {
-                "type": "integer",
-                "exclusiveMinimum": 0
-            }
-        },
-        "channels_top_down": {
-            "description": "",
-            "type": "array",
-            "items": {
-                "type": "integer",
-                "exclusiveMinimum": 0
-            }
-        },
-        "channels_hidden_top_down": {
-            "description": "",
-            "type": "array",
-            "items": {
-                "type": "integer",
-                "exclusiveMinimum": 0
-            }
-        },
-        "latents_per_channel": {
-            "description": "",
-            "type": "array",
-            "items": {
-                "type": "integer",
-                "exclusiveMinimum": 0
-            }
-        },
-        "channels_per_latent": {
-            "description": "",
+            "description": "At each resolution (decreasing order), the side lengths of the encoder's kernels. Length must be equal to base-2 logarithm of `resolution` plus one.",
             "type": "array",
             "items": {
                 "type": "integer",
@@ -83,39 +38,87 @@
             }
         },
         "kernel_sizes_top_down": {
-            "description": "",
+            "description": "At each resolution (decreasing order), the side lengths of the decoder's kernels. Length must be equal to base-2 logarithm of `resolution` plus one.",
             "type": "array",
             "items": {
                 "type": "integer",
                 "exclusiveMinimum": 0
             }
         },
+        "channels_hidden": {
+            "description": "Number of intermediate channels in the encoder's residual network (ResNet) blocks. Length must be equal to base-2 logarithm of `resolution` plus one.",
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+            }
+        },
+        "channels_top_down": {
+            "description": "Number of output channels in the decoder's residual network (ResNet) blocks. Length must be equal to base-2 logarithm of `resolution` plus one.",
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+            }
+        },
+        "channels_hidden_top_down": {
+            "description": "Number of intermediate channels in the decoder's residual network (ResNet) blocks. Length must be equal to base-2 logarithm of `resolution` plus one.",
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+            }
+        },
+        "latent_feature_maps_per_resolution": {
+            "description": "Number of latent feature maps at each resolution. Length must be equal to base-2 logarithm of `resolution` plus one.",
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+            }
+        },
+        "channels_per_latent": {
+            "description": "Number of channels per latent feature map. Length must be equal to base-2 logarithm of `resolution` plus one.",
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+            }
+        },
+        "random_seed": {
+            "description": "Integer seed to use to initialise state of pseudo-random number generator(s) used in training for reproducible runs. Using a `null` value will result in non-deterministic training runs.",
+            "default": null,
+            "oneOf": [
+                {"type": "null"},
+                {"type": "integer", "minimum": 0, "maximum": 4294967295}
+            ]
+        },
         "warmup_iterations": {
-            "description": "",
+            "description": "Iterations to wait before skipping excessively large gradient updates",
             "type": "integer",
             "exclusiveMinimum": 0,
             "default": 50
         },
         "plot_recons_period": {
-            "description": "",
+            "description": "Frequency (in epochs) with which to plot reconstructions",
             "type": "integer",
             "exclusiveMinimum": 0,
             "default": 1
         },
         "subjects_to_plot": {
-            "description": "",
+            "description": "Number of subjects to include when plotting reconstructions",
             "type": "integer",
             "exclusiveMinimum": 0,
             "default": 4
         },
         "validation_period": {
-            "description": "",
+            "description": "Frequency (in epochs) with which to evaluate the model on the validation set",
             "type": "integer",
             "exclusiveMinimum": 0,
             "default": 1
         },
         "save_period": {
-            "description": "",
+            "description": "Frequency (in epochs) with which to save checkpoints",
             "type": "integer",
             "exclusiveMinimum": 0,
             "default": 1
@@ -140,31 +143,19 @@
             "default": 0.95
         },
         "gradient_clipping_value": {
-            "description": "",
+            "description": "Upper limit for the gradient norm, used when clamping gradients before applying gradient updates",
             "type": "number",
             "exclusiveMinimum": 0,
             "default": 1e2
         },
         "gradient_skipping_value": {
-            "description": "",
+            "description": "If the gradient norm exceeds this value, skip that iteration's gradient update",
             "type": "number",
             "exclusiveMinimum": 0,
             "default": 1e12
         },
-        "sequence_type": {
-            "description": "",
-            "type": "string",
-            "enum": ["flair", "dwi"],
-            "default": "flair"
-        },
-        "likelihood": {
-            "description": "",
-            "type": "string",
-            "enum": ["Gaussian", "Bernoulli"],
-            "default": "Gaussian"
-        },
-        "variance_hidden_clamp_bounds": {
-            "description": "",
+        "std_clamp_bounds_hidden": {
+            "description": "Lower and upper bound on the standard deviation of the prior and posterior Gaussian distributions of the latent variables",
             "type": "array",
             "items": {
                 "type": "number",
@@ -174,8 +165,8 @@
             "maxItems": 2,
             "default": [0.001, 1]
         },
-        "variance_output_clamp_bounds": {
-            "description": "",
+        "std_clamp_bounds_output": {
+            "description": "Lower and upper bound on standard deviation of the Gaussian distribution of the input given the latent",
             "type": "array",
             "items": {
                 "type": "number",
@@ -186,7 +177,7 @@
             "default": [0.01, 1]
         },
         "latents_per_channel_weight_sharing": {
-            "description": "",
+            "description": "Either, an array of boolean flags specifying whether to use a shared set of weights to predict the latents at that resolution, one per resolution in decreasing order (that is array length must be equal to base-2 logarithm of `resolution` plus one), or, one of the strings `\"all\"` or `\"none\"`, corresponding to flags being `true` or `false` across all resolutions respectively.",
             "oneOf": [
                 {
                     "type": "string",
@@ -203,7 +194,7 @@
             "default": "none"
         },
         "latents_to_use": {
-            "description": "",
+            "description": "Either, an array of boolean flags specifying whether to use each latent feature map (instead of the the deterministic residual network block output), one per latent feature map in order they appear in per-resolution blocks (that is array length must be equal to sum of values in `latent_feature_maps_per_resolution`), or, one of the strings `\"all\"` or `\"none\"`, corresponding to flags being `true` or `false` across all feature maps respectively.",
             "oneOf": [
                 {
                     "type": "string",
@@ -220,7 +211,7 @@
             "default": "all"
         },
         "latents_to_optimise": {
-            "description": "",
+            "description": "Either, an array of boolean flags specifying whether to optimise the parameters for the network components controlling each latent feature map, one per latent feature map in order they appear in per-resolution blocks (that is array length must be equal to sum of values in `latent_feature_maps_per_resolution`), or, one of the strings `\"all\"` or `\"none\"`, corresponding to flags being `true` or `false` across all feature maps respectively.",
             "oneOf": [
                 {
                     "type": "string",
@@ -247,176 +238,136 @@
             "default": false
         },
         "use_tanh_output": {
-            "description": "",
-            "type": "boolean",
-            "default": true
-        },
-        "new_model": {
-            "description": "",
+            "description": "Whether to use hyperbolic tangent activation function (with range `[-1, 1]`) in computing location of Gaussian distribution given latents rather than logistic sigmoid (with range `[0, 1]`).",
             "type": "boolean",
             "default": true
         },
         "use_abs_not_square": {
-            "description": "",
+            "description": "Use absolute difference rather than sum of squares when computing the log likelihood",
             "type": "boolean",
             "default": false
         },
         "plot_gradient_norms": {
-            "description": "",
+            "description": "Plot the norms of the gradients after each epoch",
             "type": "boolean",
             "default": true
         },
-        "apply_mask_in_input_space": {
-            "description": "",
-            "type": "boolean",
-            "default": false
-        },
-        "include_mask_in_loader": {
-            "description": "",
-            "type": "boolean",
-            "default": false
-        },
         "resume_from_checkpoint": {
-            "description": "",
+            "description": "Resume training from a checkpoint",
             "type": "boolean",
             "default": false
         },
         "restore_optimiser": {
-            "description": "",
+            "description": "When resuming training, restore the state of the optimiser (set to false to reset the optimiser's parameters and start training from epoch 1)",
             "type": "boolean",
             "default": true
         },
         "keep_every_checkpoint": {
-            "description": "",
+            "description": "Save, and keep, a checkpoint every epoch rather than just keeping the latest one",
             "type": "boolean",
             "default": true
         },
         "predict_x_var": {
-            "description": "",
+            "description": "Model the scale, not just the location, of the Gaussian distribution of the input given its latent",
             "type": "boolean",
             "default": true
         },
         "use_precision_reweighting": {
-            "description": "",
+            "description": "Re-weight the locations and scales of the prior and posterior distributions of the latents according to the scheme in the paper _Ladder variational autoencoders_ (Sønderby et al. 2016)",
             "type": "boolean",
             "default": false
         },
         "verbose": {
-            "description": "",
+            "description": "Print more detail in output during training",
             "type": "boolean",
             "default": true
         },
         "bottleneck_resnet_encoder": {
-            "description": "",
+            "description": "In the encoder, use a three layer Resnet block with a middle layer that has fewer channels than the output layer (the bottleneck). Alternatively, use a two-layer Resnet block whose layers have equal numbers of output channels",
             "type": "boolean",
             "default": true
         },
         "normalise_weight_by_depth": {
-            "description": "",
+            "description": "Normalise each convolution block's randomly initialised kernel parameters by the (square root of the) depth of that block.",
             "type": "boolean",
             "default": true
         },
         "zero_biases": {
-            "description": "",
+            "description": "Set each convolution block's bias to zero after initialising it",
             "type": "boolean",
             "default": true
         },
         "use_rezero": {
-            "description": "",
+            "description": "Use skip connections where the 'non-skip' part of the layer is multiplied by a scalar initialised to zero, as described in the paper _ReZero is all you need: fast convergence at large depth_ (Bachlechner et al. 2021).",
             "type": "boolean",
             "default": false
         },
         "veto_batch_norm": {
-            "description": "",
+            "description": "Do not use batch normalisation anywhere",
             "type": "boolean",
             "default": true
         },
         "veto_transformations": {
-            "description": "",
+            "description": "Do not apply augmentations to the training data",
             "type": "boolean",
             "default": false
-        },
-        "use_nii_data": {
-            "description": "",
-            "type": "boolean",
-            "default": true
-        },
-        "nifti_standardise": {
-            "description": "",
-            "type": "boolean",
-            "default": true
         },
         "shuffle_niftis": {
-            "description": "",
+            "description": "Randomise the order of the dataset before splitting into train and test sets.",
             "type": "boolean",
             "default": false
-        },
-        "save_recons_to_mat": {
-            "description": "",
-            "type": "boolean",
-            "default": false
-        },
-        "use_DDP": {
-            "description": "",
-            "type": "boolean",
-            "default": true
         },
         "convolutional_downsampling": {
-            "description": "",
+            "description": "Down-sample using stride-two convolutions, rather than x2 nearest neighbour downsampling",
             "type": "boolean",
             "default": false
         },
         "predict_x_var_with_sigmoid": {
-            "description": "",
+            "description": "Predict the scale of the Gaussian distribution of the input given its latent using a (scaled) sigmoid, rather than predicting the natural logarithm of the scale then exponentiating",
             "type": "boolean",
             "default": true
         },
         "base_recons_on_train_loader": {
-            "description": "",
+            "description": "When plotting reconstructions, reconstruct the training data rather than the validation data",
             "type": "boolean",
             "default": false
         },
         "only_use_one_conv_block_at_top": {
-            "description": "",
+            "description": "Use a truncated sequence of layers to predict from the latents the location and scale of the Gaussian distribution of the input given its latent",
             "type": "boolean",
             "default": false
         },
         "separate_hidden_loc_scale_convs": {
-            "description": "",
+            "description": "Do not just use one convolutional block, with a two-channel output, to predict the location and scale of the prior and posterior Gaussian distributions of the latents. Instead use separate blocks for the location and scale.",
             "type": "boolean",
             "default": false
         },
         "separate_output_loc_scale_convs": {
-            "description": "",
+            "description": "Do not just use one convolutional block, with a two-channel output, to predict the location and scale of the prior and posterior Gaussian distributions of the input given ts latent. Instead use separate blocks for the location and scale.",
             "type": "boolean",
             "default": false
         },
-        "discard_abnormally_small_niftis": {
-            "description": "",
-            "type": "boolean",
-            "default": true
-        },
         "apply_augmentations_to_validation_set": {
-            "description": "",
+            "description": "Apply to the validation set the same augmentations applied to the training set",
             "type": "boolean",
             "default": false
         },
         "visualise_training_pipeline_before_starting": {
-            "description": "",
+            "description": "Plot examples of the augmented training points before training begins",
             "type": "boolean",
             "default": true
         }
     },
     "required": [
         "total_epochs", 
-        "batch_size", 
-        "nii_target_shape", 
+        "batch_size",
+        "resolution",
         "channels",
         "kernel_sizes_bottom_up",
         "channels_hidden",
         "channels_top_down",
         "channels_hidden_top_down",
-        "latents_per_channel",
+        "latent_feature_maps_per_resolution",
         "channels_per_latent",
         "kernel_sizes_top_down"
     ]
