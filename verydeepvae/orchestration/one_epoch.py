@@ -28,8 +28,7 @@ def go(input_dict):
         top_down_graph.latents.train()
         top_down_graph.x_mu.train()
         if (
-            hyper_params["likelihood"] == "Gaussian"
-            and hyper_params["separate_output_loc_scale_convs"]
+            hyper_params["separate_output_loc_scale_convs"]
             and hyper_params["predict_x_var"]
         ):
             top_down_graph.x_var.train()
@@ -39,8 +38,7 @@ def go(input_dict):
         top_down_graph.latents.eval()
         top_down_graph.x_mu.eval()
         if (
-            hyper_params["likelihood"] == "Gaussian"
-            and hyper_params["separate_output_loc_scale_convs"]
+            hyper_params["separate_output_loc_scale_convs"]
             and hyper_params["predict_x_var"]
         ):
             top_down_graph.x_var.eval()
@@ -65,8 +63,7 @@ def go(input_dict):
         "top_down_graph_mu": [],
     }
     if (
-        hyper_params["likelihood"] == "Gaussian"
-        and hyper_params["separate_output_loc_scale_convs"]
+        hyper_params["separate_output_loc_scale_convs"]
         and hyper_params["predict_x_var"]
     ):
         gradient_norms["top_down_graph_var"] = []
@@ -96,36 +93,17 @@ def go(input_dict):
             data_dictionary_latents = top_down_graph.latents(data_dictionary)
             data_dictionary_x_mu = top_down_graph.x_mu(data_dictionary_latents)
 
-            if hyper_params["likelihood"] == "Gaussian":
-                x_mu, x_std, x_var, x_log_var = misc.gaussian_output(
-                    data_dictionary_x_mu,
-                    data_dictionary_latents,
-                    top_down_graph,
-                    hyper_params,
-                    num_modalities=1,
-                )
-            else:
-                logits = data_dictionary_x_mu["data"]
+            x_mu, x_std, x_var, x_log_var = misc.gaussian_output(
+                data_dictionary_x_mu,
+                data_dictionary_latents,
+                top_down_graph,
+                hyper_params,
+                num_modalities=1,
+            )
 
-            if hyper_params["likelihood"] == "Gaussian":
-                log_likelihood_per_dim, squared_difference = misc.gaussian_likelihood(
-                    batch_target_features, x_mu, x_var, x_log_var, hyper_params
-                )
-
-            else:
-                log_likelihood_per_dim = (
-                    -torch.nn.functional.binary_cross_entropy_with_logits(
-                        input=logits.reshape(logits.shape[0], -1),
-                        target=batch_target_features.reshape(
-                            batch_target_features.shape[0], -1
-                        ),
-                        reduction="none",
-                    )
-                )
-                squared_difference = torch.mean(-log_likelihood_per_dim)
-                log_likelihood_per_dim = log_likelihood_per_dim.reshape(
-                    batch_target_features.shape
-                )
+            log_likelihood_per_dim, squared_difference = misc.gaussian_likelihood(
+                batch_target_features, x_mu, x_var, x_log_var, hyper_params
+            )
 
             if validation_mask is not None:
                 log_likelihood_per_dim = torch.mul(
@@ -161,10 +139,7 @@ def go(input_dict):
 
             loss += misc.sum_non_bias_l2_norms(params, hyper_params["l2_reg_coeff"])
 
-            if (
-                hyper_params["likelihood"] == "Gaussian"
-                and hyper_params["predict_x_var"]
-            ):
+            if hyper_params["predict_x_var"]:
                 if (
                     "x_std_l2_penalty" in hyper_params
                     and hyper_params["x_std_l2_penalty"] > 0
@@ -172,11 +147,6 @@ def go(input_dict):
                     loss += hyper_params["x_std_l2_penalty"] * torch.sum(
                         torch.square(x_std - torch.ones_like(x_std))
                     )
-
-            if (
-                hyper_params["likelihood"] == "Gaussian"
-                and hyper_params["predict_x_var"]
-            ):
                 std_mean = torch.mean(x_std)
                 std_std = torch.std(x_std)
 
@@ -252,10 +222,7 @@ def go(input_dict):
             elbo_tally += elbo_average.item()
             nll_tally += nll_average.item()
 
-            if (
-                hyper_params["likelihood"] == "Gaussian"
-                and hyper_params["predict_x_var"]
-            ):
+            if hyper_params["predict_x_var"]:
                 std_mean_tally += std_mean.item()
                 std_std_tally += std_std.item()
 
@@ -288,10 +255,7 @@ def go(input_dict):
             dist.all_reduce(kl, op=dist.ReduceOp.SUM)
             dist.all_reduce(elbo_average, op=dist.ReduceOp.SUM)
             dist.all_reduce(nll_average, op=dist.ReduceOp.SUM)
-            if (
-                hyper_params["likelihood"] == "Gaussian"
-                and hyper_params["predict_x_var"]
-            ):
+            if hyper_params["predict_x_var"]:
                 dist.all_reduce(std_mean, op=dist.ReduceOp.SUM)
                 dist.all_reduce(std_std, op=dist.ReduceOp.SUM)
 
@@ -300,10 +264,7 @@ def go(input_dict):
             kl /= hyper_params["global_world_size"]
             elbo_average /= hyper_params["global_world_size"]
             nll_average /= hyper_params["global_world_size"]
-            if (
-                hyper_params["likelihood"] == "Gaussian"
-                and hyper_params["predict_x_var"]
-            ):
+            if hyper_params["predict_x_var"]:
                 std_mean /= hyper_params["global_world_size"]
                 std_std /= hyper_params["global_world_size"]
 
@@ -311,10 +272,7 @@ def go(input_dict):
             kl_tally += kl.item()
             elbo_tally += elbo_average.item()
             nll_tally += nll_average.item()
-            if (
-                hyper_params["likelihood"] == "Gaussian"
-                and hyper_params["predict_x_var"]
-            ):
+            if hyper_params["predict_x_var"]:
                 std_mean_tally += std_mean.item()
                 std_std_tally += std_std.item()
 
@@ -345,7 +303,7 @@ def go(input_dict):
     nll_tally /= batch_count
     for key in kl_all_tallies:
         kl_all_tallies[key] /= batch_count
-    if hyper_params["likelihood"] == "Gaussian" and hyper_params["predict_x_var"]:
+    if hyper_params["predict_x_var"]:
         std_mean_tally /= batch_count
         std_std_tally /= batch_count
 

@@ -23,7 +23,6 @@
     "warmup_iterations": 50,
     "gradient_clipping_value": 100,
     "gradient_skipping_value": 1000000000000,
-    "likelihood": "Gaussian",
     "predict_x_var": true,
     "predict_x_var_with_sigmoid": true,
     "variance_hidden_clamp_bounds": [0.001, 1],

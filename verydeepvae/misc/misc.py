@@ -58,8 +58,7 @@ def count_gradient_nans(
     ).item()
     gradient_norms["top_down_graph_mu"].append([iteration, grad_norm_td2])
     if (
-        hyper_params["likelihood"] == "Gaussian"
-        and hyper_params["separate_output_loc_scale_convs"]
+        hyper_params["separate_output_loc_scale_convs"]
         and hyper_params["predict_x_var"]
     ):
         grad_norm_td3 = torch.nn.utils.clip_grad_norm_(
@@ -71,8 +70,7 @@ def count_gradient_nans(
         s = hyper_params["gradient_skipping_value"]
         do_not_skip = grad_norm_bu1 < s and grad_norm_td1 < s and grad_norm_td2 < s
         if (
-            hyper_params["likelihood"] == "Gaussian"
-            and hyper_params["separate_output_loc_scale_convs"]
+            hyper_params["separate_output_loc_scale_convs"]
             and hyper_params["predict_x_var"]
         ):
             do_not_skip *= grad_norm_td3 < s
@@ -85,8 +83,7 @@ def count_gradient_nans(
     nan_count_grads += np.sum(np.isnan(grad_norm_td1)) + np.sum(np.isinf(grad_norm_td1))
     nan_count_grads += np.sum(np.isnan(grad_norm_td2)) + np.sum(np.isinf(grad_norm_td2))
     if (
-        hyper_params["likelihood"] == "Gaussian"
-        and hyper_params["separate_output_loc_scale_convs"]
+        hyper_params["separate_output_loc_scale_convs"]
         and hyper_params["predict_x_var"]
     ):
         nan_count_grads += np.sum(np.isnan(grad_norm_td3)) + np.sum(
@@ -191,7 +188,7 @@ def gaussian_output(
     # x_var = None
     # x_log_var = None
 
-    if hyper_params["likelihood"] == "Gaussian" and hyper_params["predict_x_var"]:
+    if hyper_params["predict_x_var"]:
         # Currently only predicting separate locs and scales for Gaussian p(x|z).
         if hyper_params["separate_output_loc_scale_convs"]:
             data_dictionary_x_var = top_down_graph.x_var(data_dictionary_latents)

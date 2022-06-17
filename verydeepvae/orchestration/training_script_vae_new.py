@@ -321,8 +321,7 @@ def main(hyper_params):
         top_down_graph.x_mu
     )
     if (
-        hyper_params["likelihood"] == "Gaussian"
-        and hyper_params["separate_output_loc_scale_convs"]
+        hyper_params["separate_output_loc_scale_convs"]
         and hyper_params["predict_x_var"]
     ):
         top_down_graph.x_var = torch.nn.SyncBatchNorm.convert_sync_batchnorm(
@@ -345,8 +344,7 @@ def main(hyper_params):
         output_device=hyper_params["device"],
     )
     if (
-        hyper_params["likelihood"] == "Gaussian"
-        and hyper_params["separate_output_loc_scale_convs"]
+        hyper_params["separate_output_loc_scale_convs"]
         and hyper_params["predict_x_var"]
     ):
         top_down_graph.x_var = torch.nn.parallel.DistributedDataParallel(
@@ -367,8 +365,7 @@ def main(hyper_params):
         params += list(top_down_graph.x_mu.parameters())
 
     if (
-        hyper_params["likelihood"] == "Gaussian"
-        and hyper_params["separate_output_loc_scale_convs"]
+        hyper_params["separate_output_loc_scale_convs"]
         and hyper_params["predict_x_var"]
     ):
         if not ("optimise_xvar" in hyper_params and not hyper_params["optimise_xvar"]):
@@ -437,8 +434,7 @@ def main(hyper_params):
         ),
     )
     if (
-        hyper_params["likelihood"] == "Gaussian"
-        and hyper_params["separate_output_loc_scale_convs"]
+        hyper_params["separate_output_loc_scale_convs"]
         and hyper_params["predict_x_var"]
     ):
         misc.print_0(
@@ -479,8 +475,7 @@ def main(hyper_params):
             checkpoint["top_down_x_mu_graph_state_dict"]
         )
         if (
-            hyper_params["likelihood"] == "Gaussian"
-            and hyper_params["separate_output_loc_scale_convs"]
+            hyper_params["separate_output_loc_scale_convs"]
             and hyper_params["predict_x_var"]
         ):
             top_down_graph.x_var.load_state_dict(
@@ -861,8 +856,7 @@ def main(hyper_params):
                 checkpoint_dict["filenames_flair"] = filenames_flair
 
                 if (
-                    hyper_params["likelihood"] == "Gaussian"
-                    and hyper_params["separate_output_loc_scale_convs"]
+                    hyper_params["separate_output_loc_scale_convs"]
                     and hyper_params["predict_x_var"]
                 ):
                     checkpoint_dict[
@@ -894,8 +888,7 @@ def main(hyper_params):
                 top_down_graph.latents.eval()
                 top_down_graph.x_mu.eval()
                 if (
-                    hyper_params["likelihood"] == "Gaussian"
-                    and hyper_params["separate_output_loc_scale_convs"]
+                    hyper_params["separate_output_loc_scale_convs"]
                     and hyper_params["predict_x_var"]
                 ):
                     top_down_graph.x_var.eval()
@@ -915,10 +908,7 @@ def main(hyper_params):
                     to_plot = [current_input]
                     titles = ["input: current_input"]
 
-                    if (
-                        hyper_params["likelihood"] == "Gaussian"
-                        and hyper_params["predict_x_var"]
-                    ):
+                    if hyper_params["predict_x_var"]:
                         to_plot_std = [current_input]
                         titles_std = ["input: current_input"]
 
@@ -958,62 +948,37 @@ def main(hyper_params):
                             data_dictionary_latents
                         )
 
-                        if hyper_params["likelihood"] == "Gaussian":
-                            x_mu, x_std, x_var, x_log_var = misc.gaussian_output(
-                                data_dictionary_x_mu,
-                                data_dictionary_latents,
-                                top_down_graph,
-                                hyper_params,
-                                num_modalities=1,
-                            )
-                        else:
-                            logits = data_dictionary_x_mu["data"]
-                            probs = logits.detach().cpu()
-                            probs = torch.sigmoid(probs)
-                            preds = probs.detach().clone()
-                            preds[preds >= 0.5] = 1
-                            preds[preds < 0.5] = 0
-
-                            x_mu = preds
+                        x_mu, x_std, x_var, x_log_var = misc.gaussian_output(
+                            data_dictionary_x_mu,
+                            data_dictionary_latents,
+                            top_down_graph,
+                            hyper_params,
+                            num_modalities=1,
+                        )
 
                         if hyper_params["half_precision"]:
                             x_mu = x_mu.type(torch.float32)
-                            if (
-                                hyper_params["likelihood"] == "Gaussian"
-                                and hyper_params["predict_x_var"]
-                            ):
+                            if hyper_params["predict_x_var"]:
                                 x_std = x_std.type(torch.float32)
 
                         x_mu = x_mu.cpu().detach().numpy()
-                        if (
-                            hyper_params["likelihood"] == "Gaussian"
-                            and hyper_params["predict_x_var"]
-                        ):
+                        if hyper_params["predict_x_var"]:
                             x_std = x_std.cpu().detach().numpy()
 
                         to_plot += [x_mu]
-                        if (
-                            hyper_params["likelihood"] == "Gaussian"
-                            and hyper_params["predict_x_var"]
-                        ):
+                        if hyper_params["predict_x_var"]:
                             to_plot_std += [x_std]
 
                         if min == max:
                             if is_3d:
                                 titles += ["E[p(current_input | z)]. No imputation!"]
-                                if (
-                                    hyper_params["likelihood"] == "Gaussian"
-                                    and hyper_params["predict_x_var"]
-                                ):
+                                if hyper_params["predict_x_var"]:
                                     titles_std += [
                                         "STD[p(current_input | z)]. No imputation!"
                                     ]
                             else:
                                 titles += ["E[p(current_input | z)].\nNo imputation!"]
-                                if (
-                                    hyper_params["likelihood"] == "Gaussian"
-                                    and hyper_params["predict_x_var"]
-                                ):
+                                if hyper_params["predict_x_var"]:
                                     titles_std += [
                                         "STD[p(current_input | z)].\nNo imputation!"
                                     ]
@@ -1031,10 +996,7 @@ def main(hyper_params):
                                     + res
                                     + " cubed using the prior"
                                 ]
-                                if (
-                                    hyper_params["likelihood"] == "Gaussian"
-                                    and hyper_params["predict_x_var"]
-                                ):
+                                if hyper_params["predict_x_var"]:
                                     titles_std += [
                                         "STD[p(current_input | z)]. "
                                         + "Imputing latents above "
@@ -1047,10 +1009,7 @@ def main(hyper_params):
                                     + res
                                     + "\nsquared using the prior"
                                 ]
-                                if (
-                                    hyper_params["likelihood"] == "Gaussian"
-                                    and hyper_params["predict_x_var"]
-                                ):
+                                if hyper_params["predict_x_var"]:
                                     titles_std += [
                                         "STD[p(current_input | z)].\n"
                                         + "Imputing latents above "
@@ -1062,10 +1021,7 @@ def main(hyper_params):
                         hyper_params["subjects_to_plot"]
                     )
                     prefix = "prog_recons_rank" + str(hyper_params["local_rank"])
-                    if (
-                        hyper_params["likelihood"] == "Gaussian"
-                        and hyper_params["predict_x_var"]
-                    ):
+                    if hyper_params["predict_x_var"]:
                         prefix_std = "prog_stds_rank" + str(hyper_params["local_rank"])
                     if is_3d:
                         visuals.plot_3d_recons_v2(
@@ -1077,10 +1033,7 @@ def main(hyper_params):
                             hyper_params=hyper_params,
                             prefix=prefix,
                         )
-                        if (
-                            hyper_params["likelihood"] == "Gaussian"
-                            and hyper_params["predict_x_var"]
-                        ):
+                        if hyper_params["predict_x_var"]:
                             visuals.plot_3d_recons_v2(
                                 to_plot_std,
                                 titles_std,
@@ -1101,10 +1054,7 @@ def main(hyper_params):
                             num_to_plot=subjects_to_plot_per_process,
                             norm_recons=True,
                         )
-                        if (
-                            hyper_params["likelihood"] == "Gaussian"
-                            and hyper_params["predict_x_var"]
-                        ):
+                        if hyper_params["predict_x_var"]:
                             visuals.plot_2d(
                                 to_plot_std,
                                 titles_std,
@@ -1181,35 +1131,22 @@ def main(hyper_params):
                                 data_dictionary_latents
                             )
 
-                            if hyper_params["likelihood"] == "Gaussian":
-                                (
-                                    samples,
-                                    samples_std,
-                                    samples_var,
-                                    samples_log_var,
-                                ) = misc.gaussian_output(
-                                    data_dictionary_x_mu,
-                                    data_dictionary_latents,
-                                    top_down_graph,
-                                    hyper_params,
-                                    num_modalities=1,
-                                )
-                            else:
-                                logits = data_dictionary_x_mu["data"]
-                                probs = logits.detach().cpu()
-                                probs = torch.sigmoid(probs)
-                                preds = probs.detach().clone()
-                                preds[preds >= 0.5] = 1
-                                preds[preds < 0.5] = 0
-
-                                samples = preds
+                            (
+                                samples,
+                                samples_std,
+                                samples_var,
+                                samples_log_var,
+                            ) = misc.gaussian_output(
+                                data_dictionary_x_mu,
+                                data_dictionary_latents,
+                                top_down_graph,
+                                hyper_params,
+                                num_modalities=1,
+                            )
 
                             samples = samples.type(torch.float32)
                             samples = samples.cpu().detach().numpy()
-                            if (
-                                hyper_params["likelihood"] == "Gaussian"
-                                and hyper_params["predict_x_var"]
-                            ):
+                            if hyper_params["predict_x_var"]:
                                 samples_std = samples_std.type(torch.float32)
                                 samples_std = samples_std.cpu().detach().numpy()
 
@@ -1242,12 +1179,8 @@ def main(hyper_params):
 
                                 to_plot = [samples]
                                 titles = ["sample from p(current_input | z)"]
-                                if (
-                                    hyper_params["likelihood"] == "Gaussian"
-                                    and hyper_params["predict_x_var"]
-                                ):
-                                    to_plot += [samples_std]
-                                    titles += ["std of p(current_input | z)"]
+                                to_plot += [samples_std]
+                                titles += ["std of p(current_input | z)"]
 
                                 subjects_to_plot_per_process = np.min(
                                     [
@@ -1293,10 +1226,7 @@ def main(hyper_params):
                                     5,
                                     norm_recons=True,
                                 )
-                                if (
-                                    hyper_params["likelihood"] == "Gaussian"
-                                    and hyper_params["predict_x_var"]
-                                ):
+                                if hyper_params["predict_x_var"]:
                                     visuals.image_grid(
                                         samples_std,
                                         epoch,
