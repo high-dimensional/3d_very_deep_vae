@@ -6,7 +6,6 @@
     "learning_rate": 1e-3, 
     "train_frac": 0.95, 
     "half_precision": false, 
-    "print_model": false,
     "output_activation_function": "tanh",
     "use_abs_not_square": false,
     "plot_gradient_norms": true,
@@ -14,7 +13,6 @@
     "subjects_to_plot": 4,
     "validation_period": 1,
     "save_period": 1,
-    "base_recons_on_train_loader": false,
     "resume_from_checkpoint": false,
     "restore_optimiser": true,
     "keep_every_checkpoint": true,
@@ -49,6 +47,5 @@
     "latents_to_optimise":  "all",
     "veto_transformations": false,
     "apply_augmentations_to_validation_set": false,
-    "visualise_training_pipeline_before_starting": true,
-    "shuffle_niftis": false
+    "visualise_training_pipeline_before_starting": true
 }
