@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict
 import torch
-from verydeepvae.orchestration import training_script_vae_new as training_script
+from verydeepvae.orchestration.training import train_model
 
 
 def parse_command_line_arguments() -> argparse.Namespace:
@@ -147,7 +147,7 @@ def main():
             ) from e
     post_process_hyperparameters(hyperparameters, cli_args)
     torch.multiprocessing.set_start_method("spawn")
-    training_script.main(hyperparameters)
+    train_model(hyperparameters)
 
 
 if __name__ == "__main__":

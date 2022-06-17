@@ -22,19 +22,14 @@ from ..data_tools.data_transformations import create_data_transformations
 import monai
 
 
-def main(hyper_params):
-    """
-    This script coordinates everything!
-
-    Reproducibility...
-    Take another look at this:
-    https://albertcthomas.github.io/good-practices-random-number-generators/
-
-    monai.utils.set_determinism(seed=True) results in each process applying the same
-    augmentation functions, which is wrong but not fatal...
-
-    Setting torch.manual_seed doesn't seem to make a difference
-    """
+def train_model(hyper_params):
+    """Train very deep variational autoencoder model with given hyper parameters."""
+    # Reproducibility...
+    # Take another look at this:
+    # https://albertcthomas.github.io/good-practices-random-number-generators/
+    # monai.utils.set_determinism(seed=True) results in each process applying the same
+    # augmentation functions, which is wrong but not fatal...
+    # Setting torch.manual_seed doesn't seem to make a difference
     random_seed = hyper_params.get("random_seed", 666)
     np.random.seed(random_seed)
     random.seed(random_seed)
