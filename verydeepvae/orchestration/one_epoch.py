@@ -29,7 +29,7 @@ def go(input_dict):
         top_down_graph.x_mu.train()
         if (
             hyper_params["separate_output_loc_scale_convs"]
-            and hyper_params["predict_x_var"]
+            and hyper_params["predict_x_scale"]
         ):
             top_down_graph.x_var.train()
         progress_bar_prefix = "Epoch " + str(epoch) + ") "
@@ -39,7 +39,7 @@ def go(input_dict):
         top_down_graph.x_mu.eval()
         if (
             hyper_params["separate_output_loc_scale_convs"]
-            and hyper_params["predict_x_var"]
+            and hyper_params["predict_x_scale"]
         ):
             top_down_graph.x_var.eval()
         progress_bar_prefix = ""
@@ -64,7 +64,7 @@ def go(input_dict):
     }
     if (
         hyper_params["separate_output_loc_scale_convs"]
-        and hyper_params["predict_x_var"]
+        and hyper_params["predict_x_scale"]
     ):
         gradient_norms["top_down_graph_var"] = []
 
@@ -139,7 +139,7 @@ def go(input_dict):
 
             loss += misc.sum_non_bias_l2_norms(params, hyper_params["l2_reg_coeff"])
 
-            if hyper_params["predict_x_var"]:
+            if hyper_params["predict_x_scale"]:
                 if (
                     "x_std_l2_penalty" in hyper_params
                     and hyper_params["x_std_l2_penalty"] > 0
@@ -222,7 +222,7 @@ def go(input_dict):
             elbo_tally += elbo_average.item()
             nll_tally += nll_average.item()
 
-            if hyper_params["predict_x_var"]:
+            if hyper_params["predict_x_scale"]:
                 std_mean_tally += std_mean.item()
                 std_std_tally += std_std.item()
 
@@ -255,7 +255,7 @@ def go(input_dict):
             dist.all_reduce(kl, op=dist.ReduceOp.SUM)
             dist.all_reduce(elbo_average, op=dist.ReduceOp.SUM)
             dist.all_reduce(nll_average, op=dist.ReduceOp.SUM)
-            if hyper_params["predict_x_var"]:
+            if hyper_params["predict_x_scale"]:
                 dist.all_reduce(std_mean, op=dist.ReduceOp.SUM)
                 dist.all_reduce(std_std, op=dist.ReduceOp.SUM)
 
@@ -264,7 +264,7 @@ def go(input_dict):
             kl /= hyper_params["global_world_size"]
             elbo_average /= hyper_params["global_world_size"]
             nll_average /= hyper_params["global_world_size"]
-            if hyper_params["predict_x_var"]:
+            if hyper_params["predict_x_scale"]:
                 std_mean /= hyper_params["global_world_size"]
                 std_std /= hyper_params["global_world_size"]
 
@@ -272,7 +272,7 @@ def go(input_dict):
             kl_tally += kl.item()
             elbo_tally += elbo_average.item()
             nll_tally += nll_average.item()
-            if hyper_params["predict_x_var"]:
+            if hyper_params["predict_x_scale"]:
                 std_mean_tally += std_mean.item()
                 std_std_tally += std_std.item()
 
@@ -303,7 +303,7 @@ def go(input_dict):
     nll_tally /= batch_count
     for key in kl_all_tallies:
         kl_all_tallies[key] /= batch_count
-    if hyper_params["predict_x_var"]:
+    if hyper_params["predict_x_scale"]:
         std_mean_tally /= batch_count
         std_std_tally /= batch_count
 

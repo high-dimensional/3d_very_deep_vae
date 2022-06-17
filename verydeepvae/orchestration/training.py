@@ -322,7 +322,7 @@ def train_model(hyper_params):
     )
     if (
         hyper_params["separate_output_loc_scale_convs"]
-        and hyper_params["predict_x_var"]
+        and hyper_params["predict_x_scale"]
     ):
         top_down_graph.x_var = torch.nn.SyncBatchNorm.convert_sync_batchnorm(
             top_down_graph.x_var
@@ -345,7 +345,7 @@ def train_model(hyper_params):
     )
     if (
         hyper_params["separate_output_loc_scale_convs"]
-        and hyper_params["predict_x_var"]
+        and hyper_params["predict_x_scale"]
     ):
         top_down_graph.x_var = torch.nn.parallel.DistributedDataParallel(
             top_down_graph.x_var,
@@ -366,7 +366,7 @@ def train_model(hyper_params):
 
     if (
         hyper_params["separate_output_loc_scale_convs"]
-        and hyper_params["predict_x_var"]
+        and hyper_params["predict_x_scale"]
     ):
         if not ("optimise_xvar" in hyper_params and not hyper_params["optimise_xvar"]):
             params += list(top_down_graph.x_var.parameters())
@@ -435,7 +435,7 @@ def train_model(hyper_params):
     )
     if (
         hyper_params["separate_output_loc_scale_convs"]
-        and hyper_params["predict_x_var"]
+        and hyper_params["predict_x_scale"]
     ):
         misc.print_0(
             hyper_params,
@@ -476,7 +476,7 @@ def train_model(hyper_params):
         )
         if (
             hyper_params["separate_output_loc_scale_convs"]
-            and hyper_params["predict_x_var"]
+            and hyper_params["predict_x_scale"]
         ):
             top_down_graph.x_var.load_state_dict(
                 checkpoint["top_down_x_var_graph_state_dict"]
@@ -859,7 +859,7 @@ def train_model(hyper_params):
 
                 if (
                     hyper_params["separate_output_loc_scale_convs"]
-                    and hyper_params["predict_x_var"]
+                    and hyper_params["predict_x_scale"]
                 ):
                     checkpoint_dict[
                         "top_down_x_var_graph_state_dict"
@@ -891,7 +891,7 @@ def train_model(hyper_params):
                 top_down_graph.x_mu.eval()
                 if (
                     hyper_params["separate_output_loc_scale_convs"]
-                    and hyper_params["predict_x_var"]
+                    and hyper_params["predict_x_scale"]
                 ):
                     top_down_graph.x_var.eval()
 
@@ -910,7 +910,7 @@ def train_model(hyper_params):
                     to_plot = [current_input]
                     titles = ["input: current_input"]
 
-                    if hyper_params["predict_x_var"]:
+                    if hyper_params["predict_x_scale"]:
                         to_plot_std = [current_input]
                         titles_std = ["input: current_input"]
 
@@ -959,27 +959,27 @@ def train_model(hyper_params):
 
                         if hyper_params["half_precision"]:
                             x_mu = x_mu.type(torch.float32)
-                            if hyper_params["predict_x_var"]:
+                            if hyper_params["predict_x_scale"]:
                                 x_std = x_std.type(torch.float32)
 
                         x_mu = x_mu.cpu().detach().numpy()
-                        if hyper_params["predict_x_var"]:
+                        if hyper_params["predict_x_scale"]:
                             x_std = x_std.cpu().detach().numpy()
 
                         to_plot += [x_mu]
-                        if hyper_params["predict_x_var"]:
+                        if hyper_params["predict_x_scale"]:
                             to_plot_std += [x_std]
 
                         if min == max:
                             if is_3d:
                                 titles += ["E[p(current_input | z)]. No imputation!"]
-                                if hyper_params["predict_x_var"]:
+                                if hyper_params["predict_x_scale"]:
                                     titles_std += [
                                         "STD[p(current_input | z)]. No imputation!"
                                     ]
                             else:
                                 titles += ["E[p(current_input | z)].\nNo imputation!"]
-                                if hyper_params["predict_x_var"]:
+                                if hyper_params["predict_x_scale"]:
                                     titles_std += [
                                         "STD[p(current_input | z)].\nNo imputation!"
                                     ]
@@ -997,7 +997,7 @@ def train_model(hyper_params):
                                     + res
                                     + " cubed using the prior"
                                 ]
-                                if hyper_params["predict_x_var"]:
+                                if hyper_params["predict_x_scale"]:
                                     titles_std += [
                                         "STD[p(current_input | z)]. "
                                         + "Imputing latents above "
@@ -1010,7 +1010,7 @@ def train_model(hyper_params):
                                     + res
                                     + "\nsquared using the prior"
                                 ]
-                                if hyper_params["predict_x_var"]:
+                                if hyper_params["predict_x_scale"]:
                                     titles_std += [
                                         "STD[p(current_input | z)].\n"
                                         + "Imputing latents above "
@@ -1022,7 +1022,7 @@ def train_model(hyper_params):
                         hyper_params["subjects_to_plot"]
                     )
                     prefix = "prog_recons_rank" + str(hyper_params["local_rank"])
-                    if hyper_params["predict_x_var"]:
+                    if hyper_params["predict_x_scale"]:
                         prefix_std = "prog_stds_rank" + str(hyper_params["local_rank"])
                     if is_3d:
                         visuals.plot_3d_recons_v2(
@@ -1034,7 +1034,7 @@ def train_model(hyper_params):
                             hyper_params=hyper_params,
                             prefix=prefix,
                         )
-                        if hyper_params["predict_x_var"]:
+                        if hyper_params["predict_x_scale"]:
                             visuals.plot_3d_recons_v2(
                                 to_plot_std,
                                 titles_std,
@@ -1055,7 +1055,7 @@ def train_model(hyper_params):
                             num_to_plot=subjects_to_plot_per_process,
                             norm_recons=True,
                         )
-                        if hyper_params["predict_x_var"]:
+                        if hyper_params["predict_x_scale"]:
                             visuals.plot_2d(
                                 to_plot_std,
                                 titles_std,
@@ -1147,7 +1147,7 @@ def train_model(hyper_params):
 
                             samples = samples.type(torch.float32)
                             samples = samples.cpu().detach().numpy()
-                            if hyper_params["predict_x_var"]:
+                            if hyper_params["predict_x_scale"]:
                                 samples_std = samples_std.type(torch.float32)
                                 samples_std = samples_std.cpu().detach().numpy()
 
@@ -1227,7 +1227,7 @@ def train_model(hyper_params):
                                     5,
                                     norm_recons=True,
                                 )
-                                if hyper_params["predict_x_var"]:
+                                if hyper_params["predict_x_scale"]:
                                     visuals.image_grid(
                                         samples_std,
                                         epoch,

@@ -36,7 +36,7 @@ def count_gradient_nans(
     gradient_norms["top_down_graph_mu"].append([iteration, grad_norm_td2])
     if (
         hyper_params["separate_output_loc_scale_convs"]
-        and hyper_params["predict_x_var"]
+        and hyper_params["predict_x_scale"]
     ):
         grad_norm_td3 = torch.nn.utils.clip_grad_norm_(
             top_down_graph.x_var.parameters(), c
@@ -48,7 +48,7 @@ def count_gradient_nans(
         do_not_skip = grad_norm_bu1 < s and grad_norm_td1 < s and grad_norm_td2 < s
         if (
             hyper_params["separate_output_loc_scale_convs"]
-            and hyper_params["predict_x_var"]
+            and hyper_params["predict_x_scale"]
         ):
             do_not_skip *= grad_norm_td3 < s
     else:
@@ -61,7 +61,7 @@ def count_gradient_nans(
     nan_count_grads += np.sum(np.isnan(grad_norm_td2)) + np.sum(np.isinf(grad_norm_td2))
     if (
         hyper_params["separate_output_loc_scale_convs"]
-        and hyper_params["predict_x_var"]
+        and hyper_params["predict_x_scale"]
     ):
         nan_count_grads += np.sum(np.isnan(grad_norm_td3)) + np.sum(
             np.isinf(grad_norm_td3)
@@ -114,7 +114,7 @@ def gaussian_likelihood(batch_target_features, x_mu, x_var, x_log_var, hyper_par
     """
     squared_difference = torch.square(batch_target_features - x_mu)
 
-    if hyper_params["predict_x_var"]:
+    if hyper_params["predict_x_scale"]:
         squared_diff_normed = torch.true_divide(squared_difference, x_var)
         log_likelihood_per_dim = -0.5 * (
             x_log_var + np.log(2 * np.pi) + squared_diff_normed
@@ -162,14 +162,14 @@ def gaussian_output(
     # x_var = None
     # x_log_var = None
 
-    if hyper_params["predict_x_var"]:
+    if hyper_params["predict_x_scale"]:
         # Currently only predicting separate locs and scales for Gaussian p(x|z).
         if hyper_params["separate_output_loc_scale_convs"]:
             data_dictionary_x_var = top_down_graph.x_var(data_dictionary_latents)
 
-            if key_is_true(hyper_params, "predict_x_var_with_sigmoid"):
-                lower = hyper_params["variance_output_clamp_bounds"][0]
-                upper = hyper_params["variance_output_clamp_bounds"][1]
+            if key_is_true(hyper_params, "predict_x_scale_with_sigmoid"):
+                lower = hyper_params["scale_output_clamp_bounds"][0]
+                upper = hyper_params["scale_output_clamp_bounds"][1]
                 x_std = lower + (upper - lower) * torch.sigmoid(
                     data_dictionary_x_var["data"]
                 )
@@ -177,11 +177,11 @@ def gaussian_output(
                 x_log_var = 2 * torch.log(x_std)
             else:
                 x_log_var = data_dictionary_x_var["data"]
-                if hyper_params["variance_output_clamp_bounds"] is not None:
+                if hyper_params["scale_output_clamp_bounds"] is not None:
                     x_log_var = torch.clamp(
                         x_log_var,
-                        hyper_params["variance_output_clamp_bounds"][0],
-                        hyper_params["variance_output_clamp_bounds"][1],
+                        hyper_params["scale_output_clamp_bounds"][0],
+                        hyper_params["scale_output_clamp_bounds"][1],
                     )
                 x_var = torch.exp(x_log_var)
                 x_std = torch.exp(0.5 * x_log_var)
@@ -189,9 +189,9 @@ def gaussian_output(
         else:
             x_mu = data_dictionary_x_mu["data"][:, 0:num_modalities, ...]
 
-            if key_is_true(hyper_params, "predict_x_var_with_sigmoid"):
-                lower = hyper_params["variance_output_clamp_bounds"][0]
-                upper = hyper_params["variance_output_clamp_bounds"][1]
+            if key_is_true(hyper_params, "predict_x_scale_with_sigmoid"):
+                lower = hyper_params["scale_output_clamp_bounds"][0]
+                upper = hyper_params["scale_output_clamp_bounds"][1]
                 x_std = lower + (upper - lower) * torch.sigmoid(
                     data_dictionary_x_mu["data"][
                         :, num_modalities : 2 * num_modalities, ...
@@ -203,11 +203,11 @@ def gaussian_output(
                 x_log_var = data_dictionary_x_mu["data"][
                     :, num_modalities : 2 * num_modalities, ...
                 ]
-                if hyper_params["variance_output_clamp_bounds"] is not None:
+                if hyper_params["scale_output_clamp_bounds"] is not None:
                     x_log_var = torch.clamp(
                         x_log_var,
-                        hyper_params["variance_output_clamp_bounds"][0],
-                        hyper_params["variance_output_clamp_bounds"][1],
+                        hyper_params["scale_output_clamp_bounds"][0],
+                        hyper_params["scale_output_clamp_bounds"][1],
                     )
                 x_var = torch.exp(x_log_var)
                 x_std = torch.exp(0.5 * x_log_var)

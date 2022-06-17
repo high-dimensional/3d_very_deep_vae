@@ -142,7 +142,7 @@ class TopDownGraph:
                 uppermost_block=True,
                 lateral_connection_channels=channels_in,
                 lateral_skip_con_to_use=current_lateral_skip_con,
-                variance_bounds=hyper_params["variance_hidden_clamp_bounds"],
+                variance_bounds=hyper_params["scale_hidden_clamp_bounds"],
                 precision_reweighting=hyper_params["use_precision_reweighting"],
                 separate_loc_scale_convs=hyper_params[
                     "separate_hidden_loc_scale_convs"
@@ -211,7 +211,7 @@ class TopDownGraph:
                         channels_for_latent=channels_per_latent[0],
                         lateral_connection_channels=channels_in,
                         lateral_skip_con_to_use=current_lateral_skip_con,
-                        variance_bounds=hyper_params["variance_hidden_clamp_bounds"],
+                        variance_bounds=hyper_params["scale_hidden_clamp_bounds"],
                         precision_reweighting=hyper_params["use_precision_reweighting"],
                         separate_loc_scale_convs=hyper_params[
                             "separate_hidden_loc_scale_convs"
@@ -367,9 +367,7 @@ class TopDownGraph:
                             channels_for_latent=channels_per_latent[k + 1],
                             lateral_connection_channels=lateral_connection_channels,
                             lateral_skip_con_to_use=current_lateral_skip_con,
-                            variance_bounds=hyper_params[
-                                "variance_hidden_clamp_bounds"
-                            ],
+                            variance_bounds=hyper_params["scale_hidden_clamp_bounds"],
                             precision_reweighting=hyper_params[
                                 "use_precision_reweighting"
                             ],
@@ -444,7 +442,7 @@ class TopDownGraph:
                                 lateral_connection_channels=lateral_connection_channels,
                                 lateral_skip_con_to_use=current_lateral_skip_con,
                                 variance_bounds=hyper_params[
-                                    "variance_hidden_clamp_bounds"
+                                    "scale_hidden_clamp_bounds"
                                 ],
                                 precision_reweighting=hyper_params[
                                     "use_precision_reweighting"
@@ -492,7 +490,7 @@ class TopDownGraph:
         self.latents = nn.Sequential(*groups).to(kwargs["device"])
 
         if (
-            hyper_params["predict_x_var"]
+            hyper_params["predict_x_scale"]
             and hyper_params["separate_output_loc_scale_convs"]
         ):
             # Need a block to produce mean and log_var of p(x|z).
@@ -536,7 +534,7 @@ class TopDownGraph:
 
             self.x_var = nn.Sequential(*block).to(kwargs["device"])
         else:
-            if hyper_params["predict_x_var"]:
+            if hyper_params["predict_x_scale"]:
                 channels_out = 2 * output_channels
             else:
                 channels_out = output_channels
@@ -570,7 +568,7 @@ class TopDownGraph:
 
             if experimental_activate_chans_0_1_only:
                 if hyper_params["output_activation_function"] == "tanh":
-                    if hyper_params["predict_x_var"]:
+                    if hyper_params["predict_x_scale"]:
                         out_trans = TanhFirstNChansOnlyBlock(
                             half_precision=hyper_params["half_precision"],
                             channels_to_tanh=output_channels - 1,
@@ -582,7 +580,7 @@ class TopDownGraph:
                         )
 
                 elif hyper_params["output_activation_function"] == "sigmoid":
-                    if hyper_params["predict_x_var"]:
+                    if hyper_params["predict_x_scale"]:
                         out_trans = SigmoidFirstNChansOnlyBlock(
                             half_precision=hyper_params["half_precision"],
                             channels_to_sigmoid=output_channels - 1,
@@ -594,7 +592,7 @@ class TopDownGraph:
                         )
             else:
                 if hyper_params["output_activation_function"] == "tanh":
-                    if hyper_params["predict_x_var"]:
+                    if hyper_params["predict_x_scale"]:
                         out_trans = TanhFirstNChansOnlyBlock(
                             half_precision=hyper_params["half_precision"],
                             channels_to_tanh=output_channels,
@@ -605,7 +603,7 @@ class TopDownGraph:
                         )
 
                 elif hyper_params["output_activation_function"] == "sigmoid":
-                    if hyper_params["predict_x_var"]:
+                    if hyper_params["predict_x_scale"]:
                         out_trans = SigmoidFirstNChansOnlyBlock(
                             half_precision=hyper_params["half_precision"],
                             channels_to_sigmoid=output_channels,
