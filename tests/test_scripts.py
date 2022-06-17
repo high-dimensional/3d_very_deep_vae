@@ -101,7 +101,7 @@ def configuration_dict():
         "train_frac": 0.95,
         "half_precision": False,
         "print_model": False,
-        "use_tanh_output": True,
+        "output_activation_function": "tanh",
         "use_abs_not_square": False,
         "plot_gradient_norms": True,
         "convolutional_downsampling": False,
@@ -150,6 +150,7 @@ def configuration_dict():
         {"print_model": True},
         {"verbose": False},
         {"shuffle_nifitis": True},
+        {"output_activation_function": "sigmoid"},
     ],
     ids=lambda d: ",".join(f"{k}={v}" for k, v in d.items()) if d else "base",
 )

@@ -512,12 +512,9 @@ class TopDownGraph:
                 )
             ]
 
-            if "use_tanh_output" in hyper_params and hyper_params["use_tanh_output"]:
+            if hyper_params["output_activation_function"] == "tanh":
                 block += [TanhBlock(half_precision=hyper_params["half_precision"])]
-            elif (
-                "use_sigmoid_output" in hyper_params
-                and hyper_params["use_sigmoid_output"]
-            ):
+            elif hyper_params["output_activation_function"] == "sigmoid":
                 block += [SigmoidBlock(half_precision=hyper_params["half_precision"])]
 
             self.x_mu = nn.Sequential(*block).to(kwargs["device"])
@@ -572,10 +569,7 @@ class TopDownGraph:
                 experimental_activate_chans_0_1_only = False
 
             if experimental_activate_chans_0_1_only:
-                if (
-                    "use_tanh_output" in hyper_params
-                    and hyper_params["use_tanh_output"]
-                ):
+                if hyper_params["output_activation_function"] == "tanh":
                     if hyper_params["predict_x_var"]:
                         out_trans = TanhFirstNChansOnlyBlock(
                             half_precision=hyper_params["half_precision"],
@@ -587,10 +581,7 @@ class TopDownGraph:
                             channels_to_tanh=output_channels - 1,
                         )
 
-                elif (
-                    "use_sigmoid_output" in hyper_params
-                    and hyper_params["use_sigmoid_output"]
-                ):
+                elif hyper_params["output_activation_function"] == "sigmoid":
                     if hyper_params["predict_x_var"]:
                         out_trans = SigmoidFirstNChansOnlyBlock(
                             half_precision=hyper_params["half_precision"],
@@ -602,10 +593,7 @@ class TopDownGraph:
                             channels_to_sigmoid=output_channels - 1,
                         )
             else:
-                if (
-                    "use_tanh_output" in hyper_params
-                    and hyper_params["use_tanh_output"]
-                ):
+                if hyper_params["output_activation_function"] == "tanh":
                     if hyper_params["predict_x_var"]:
                         out_trans = TanhFirstNChansOnlyBlock(
                             half_precision=hyper_params["half_precision"],
@@ -616,10 +604,7 @@ class TopDownGraph:
                             half_precision=hyper_params["half_precision"]
                         )
 
-                elif (
-                    "use_sigmoid_output" in hyper_params
-                    and hyper_params["use_sigmoid_output"]
-                ):
+                elif hyper_params["output_activation_function"] == "sigmoid":
                     if hyper_params["predict_x_var"]:
                         out_trans = SigmoidFirstNChansOnlyBlock(
                             half_precision=hyper_params["half_precision"],
