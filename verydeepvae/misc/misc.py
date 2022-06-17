@@ -112,10 +112,7 @@ def gaussian_likelihood(batch_target_features, x_mu, x_var, x_log_var, hyper_par
     :param hyper_params:
     :return:
     """
-    if "use_abs_not_square" in hyper_params and hyper_params["use_abs_not_square"]:
-        squared_difference = torch.abs(batch_target_features - x_mu)
-    else:
-        squared_difference = torch.square(batch_target_features - x_mu)
+    squared_difference = torch.square(batch_target_features - x_mu)
 
     if hyper_params["predict_x_var"]:
         squared_diff_normed = torch.true_divide(squared_difference, x_var)

@@ -7,7 +7,6 @@
     "train_frac": 0.95, 
     "half_precision": false, 
     "output_activation_function": "tanh",
-    "use_abs_not_square": false,
     "plot_gradient_norms": true,
     "plot_recons_period": 1,
     "subjects_to_plot": 4,

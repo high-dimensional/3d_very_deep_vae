@@ -101,7 +101,6 @@ def configuration_dict():
         "train_frac": 0.95,
         "half_precision": False,
         "output_activation_function": "tanh",
-        "use_abs_not_square": False,
         "plot_gradient_norms": True,
         "convolutional_downsampling": False,
         "bottleneck_resnet_encoder": True,
