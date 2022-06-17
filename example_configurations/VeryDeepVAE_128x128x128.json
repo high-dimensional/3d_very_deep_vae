@@ -7,11 +7,8 @@
     "half_precision": false, 
     "print_model": false,
     "use_tanh_output": true,
-    "new_model": true,
     "use_abs_not_square": false,
     "plot_gradient_norms": true,
-    "apply_mask_in_input_space": false,
-    "include_mask_in_loader": false,
     "plot_recons_period": 1,
     "subjects_to_plot": 4,
     "validation_period": 1,
@@ -52,10 +49,6 @@
     "veto_transformations": false,
     "apply_augmentations_to_validation_set": false,
     "visualise_training_pipeline_before_starting": true,
-    "discard_abnormally_small_niftis": true,
     "nii_target_shape": [128, 128, 128],
-    "nifti_standardise": true,
-    "shuffle_niftis": false,
-    "save_recons_to_mat": false,
-    "use_DDP": true
+    "shuffle_niftis": false
 }
