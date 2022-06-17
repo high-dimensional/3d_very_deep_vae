@@ -127,7 +127,7 @@ def configuration_dict():
         "verbose": True,
         "variance_hidden_clamp_bounds": [0.001, 1],
         "variance_output_clamp_bounds": [0.01, 1],
-        "latents_per_channel": [2, 4, 4, 3, 2, 1],
+        "latent_feature_maps_per_resolution": [2, 4, 4, 3, 2, 1],
         "channels_per_latent": [10, 10, 10, 10, 10, 50],
         "channels": [10, 20, 30, 40, 50, 60],
         "kernel_sizes_bottom_up": [3, 3, 3, 3, 2, 1],
@@ -135,7 +135,7 @@ def configuration_dict():
         "channels_hidden": [10, 20, 30, 40, 50, 60],
         "channels_top_down": [10, 20, 30, 40, 50, 60],
         "channels_hidden_top_down": [10, 20, 30, 40, 50, 60],
-        "latents_per_channel_weight_sharing": "none",
+        "latent_feature_maps_per_resolution_weight_sharing": "none",
         "latents_to_use": "all",
         "latents_to_optimise": "all",
     }

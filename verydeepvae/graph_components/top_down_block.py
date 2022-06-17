@@ -38,7 +38,7 @@ class TopDownBlock(nn.Module):
         if "minimum_upper_hidden_bound" in self.hyper_params:
             self.index_of_latent = self.kwargs["index_of_latent"]
             self.biggest_latent_index = (
-                np.sum(self.hyper_params["latents_per_channel"]) - 1
+                np.sum(self.hyper_params["latent_feature_maps_per_resolution"]) - 1
             )
             self.minimum_upper_variance_bound = self.hyper_params[
                 "minimum_upper_hidden_bound"
@@ -84,7 +84,7 @@ class TopDownBlock(nn.Module):
         if "depth_override" in self.hyper_params:
             self.depth = self.hyper_params["depth_override"]
         else:
-            self.depth = np.sum(self.hyper_params["latents_per_channel"])
+            self.depth = np.sum(self.hyper_params["latent_feature_maps_per_resolution"])
             self.depth += 2 * (len(self.hyper_params["channels"]) - 1)
 
         if misc.key_is_true(self.kwargs, "conditional_prior"):

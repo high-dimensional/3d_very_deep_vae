@@ -770,7 +770,9 @@ def train_model(hyper_params):
                     ]
                     dims_per_latent = []
                     for k, dims in enumerate(dimensionalities):
-                        num_latents = hyper_params["latents_per_channel"][-1 - k]
+                        num_latents = hyper_params[
+                            "latent_feature_maps_per_resolution"
+                        ][-1 - k]
                         dims_per_latent += [
                             dims
                         ] * num_latents  # Times to repeat this dims

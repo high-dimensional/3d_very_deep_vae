@@ -92,11 +92,11 @@ class TopDownGraph:
         # It is incremented before each TopDownBlock
         index_of_latent = -1
 
-        latents_per_chanel = hyper_params["latents_per_channel"][::-1]
+        latents_per_chanel = hyper_params["latent_feature_maps_per_resolution"][::-1]
 
-        self.weight_sharing_index = hyper_params["latents_per_channel_weight_sharing"][
-            ::-1
-        ]
+        self.weight_sharing_index = hyper_params[
+            "latent_feature_maps_per_resolution_weight_sharing"
+        ][::-1]
 
         groups = []
         self.latents_per_group = []
