@@ -50,7 +50,6 @@
     "veto_batch_norm": true,
     "latents_to_use":  "all",
     "latents_to_optimise":  "all",
-    "sequence_type": "flair",
     "veto_transformations": false,
     "apply_augmentations_to_validation_set": false,
     "visualise_training_pipeline_before_starting": true,

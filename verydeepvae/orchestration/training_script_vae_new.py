@@ -71,26 +71,14 @@ def main(hyper_params):
             quit()
 
         checkpoint = torch.load(state_dict_fullpath, map_location="cpu")
-
-        if hyper_params["sequence_type"] == "dwi":
-            nifti_b1000_filenames = checkpoint["nifti_b1000_filenames"]
-            misc.print_0(
-                hyper_params, "Number of niftis: " + str(len(nifti_b1000_filenames))
-            )
-            nifti_b1000_paths = [
-                os.path.join(hyper_params["nifti_dwi_dir"], name)
-                for name in nifti_b1000_filenames
-            ]
-        elif hyper_params["sequence_type"] == "flair":
-            filenames_flair = checkpoint["filenames_flair"]
-            misc.print_0(hyper_params, "Number of niftis: " + str(len(filenames_flair)))
-            nifti_paths_flair = [
-                hyper_params["nifti_dir"] / name for name in filenames_flair
-            ]
-            nifti_b1000_filenames = filenames_flair
-            nifti_b1000_paths = nifti_paths_flair
+        filenames_flair = checkpoint["filenames_flair"]
+        misc.print_0(hyper_params, "Number of niftis: " + str(len(filenames_flair)))
+        nifti_paths_flair = [
+            hyper_params["nifti_dir"] / name for name in filenames_flair
+        ]
+        nifti_b1000_filenames = filenames_flair
+        nifti_b1000_paths = nifti_paths_flair
     else:
-        misc.print_0(hyper_params, "Sequence type: " + hyper_params["sequence_type"])
         misc.print_0(
             hyper_params,
             f"nifti_dir found in hyper_params: {hyper_params['nifti_dir']}",
@@ -870,11 +858,7 @@ def main(hyper_params):
                 if "kl_multiplier" in hyper_params:
                     checkpoint_dict["kl_multiplier"] = hyper_params["kl_multiplier"]
 
-                if hyper_params["sequence_type"] == "dwi":
-                    checkpoint_dict["nifti_b1000_filenames"] = nifti_b1000_filenames
-                elif hyper_params["sequence_type"] == "flair":
-                    checkpoint_dict["filenames_flair"] = filenames_flair
-                    # checkpoint_dict['filenames_seg'] = filenames_seg
+                checkpoint_dict["filenames_flair"] = filenames_flair
 
                 if (
                     hyper_params["likelihood"] == "Gaussian"

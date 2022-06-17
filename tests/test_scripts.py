@@ -145,7 +145,6 @@ def configuration_dict():
         "latents_per_channel_weight_sharing": "none",
         "latents_to_use": "all",
         "latents_to_optimise": "all",
-        "sequence_type": "flair",
         "likelihood": "Gaussian",
     }
 
