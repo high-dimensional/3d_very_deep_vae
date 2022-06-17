@@ -1180,8 +1180,9 @@ def train_model(hyper_params):
 
                                 to_plot = [samples]
                                 titles = ["sample from p(current_input | z)"]
-                                to_plot += [samples_std]
-                                titles += ["std of p(current_input | z)"]
+                                if hyper_params["predict_x_scale"]:
+                                    to_plot += [samples_std]
+                                    titles += ["std of p(current_input | z)"]
 
                                 subjects_to_plot_per_process = np.min(
                                     [
