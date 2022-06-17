@@ -53,7 +53,7 @@ class TopDownGraph:
                         half_precision=hyper_params["half_precision"],
                     )
                 )
-            output_size = hyper_params["nii_target_shape"]
+            output_size = (hyper_params["resolution"],) * 3
             self.unpooling_ops.append(
                 UnPoolingBlock(
                     hyper_params=hyper_params,

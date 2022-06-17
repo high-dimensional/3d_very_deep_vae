@@ -1,6 +1,7 @@
 {
     "total_epochs": 10, 
-    "batch_size": 64, 
+    "batch_size": 64,
+    "resolution": 32,
     "l2_reg_coeff": 1e-4,
     "learning_rate": 1e-3, 
     "train_frac": 0.95, 
@@ -49,6 +50,5 @@
     "veto_transformations": false,
     "apply_augmentations_to_validation_set": false,
     "visualise_training_pipeline_before_starting": true,
-    "nii_target_shape": [32, 32, 32],
     "shuffle_niftis": false
 }

@@ -33,9 +33,7 @@ def create_data_transformations(
         keys = ["full_brain"]
 
     resize_block = [
-        monai_trans.Resized(
-            keys=keys, spatial_size=tuple(hyper_params["nii_target_shape"])
-        )
+        monai_trans.Resized(keys=keys, spatial_size=(hyper_params["resolution"],) * 3)
     ]
 
     if "veto_transformations" in hyper_params and hyper_params["veto_transformations"]:
@@ -88,8 +86,8 @@ def create_data_transformations(
         if "min_small_crop_size" not in hyper_params:
             # This is a bit crude...
             hyper_params["min_small_crop_size"] = [
-                int(0.95 * x) for x in hyper_params["nii_target_shape"]
-            ]
+                int(0.95 * hyper_params["resolution"])
+            ] * 3
             hyper_params["rot_angle_in_rads"] = 2 * 3.14159 / 360 * (5)
             hyper_params["shear_angle_in_rads"] = 2 * 3.14159 / 360 * (5)
             hyper_params["translate_range"] = 10
@@ -260,7 +258,7 @@ def create_data_transformations(
 
         train_transforms += [
             monai_trans.Resized(
-                keys=keys, spatial_size=tuple(hyper_params["nii_target_shape"])
+                keys=keys, spatial_size=(hyper_params["resolution"],) * 3
             ),
             monai_trans.NormalizeIntensityd(keys=keys),
         ]

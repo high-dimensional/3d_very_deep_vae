@@ -1,4 +1,5 @@
 import glob
+import math
 import os
 import random
 import torch
@@ -50,14 +51,14 @@ def train_model(hyper_params):
     else:
         writer = None
 
-    if "nii_target_shape" in hyper_params:
-        data_shape = hyper_params["nii_target_shape"]
+    if "resolution" in hyper_params:
+        log_2_resolution = math.log2(hyper_params["resolution"])
+        if log_2_resolution.is_integer():
+            data_shape = [hyper_params["resolution"]] * 3
+        else:
+            raise ValueError("Value of resolution must be an integer power of 2")
     else:
-        misc.print_0(
-            hyper_params,
-            "You must specify the resample target shape using the data_shape key!",
-        )
-        quit()
+        raise ValueError("Target shape must be specified using the resolution key")
 
     if hyper_params["resume_from_checkpoint"]:
         state_dict_fullpath = os.path.join(
@@ -917,10 +918,9 @@ def train_model(hyper_params):
                         max = len(hyper_params["channels_per_latent"])
 
                         if "hidden_spatial_dims" in hyper_params:
-                            temp = (
-                                hyper_params["nii_target_shape"][0:1]
-                                + hyper_params["hidden_spatial_dims"][:]
-                            )
+                            temp = [hyper_params["resolution"]] + hyper_params[
+                                "hidden_spatial_dims"
+                            ][:]
                             res_to_sample_from_prior = temp[::-1][min:]
                         else:
                             res_to_sample_from_prior = [2**p for p in range(min, max)]

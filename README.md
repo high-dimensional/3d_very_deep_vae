@@ -126,8 +126,8 @@ The hyperparameters specifying the model and training run configuration are spec
   The number of images per minibatch for the stochastic gradient descent training algorithm. For the `128×128×128` configuration the model a batch size of 1 is needed to keep the peak GPU memory use below 32GiB. Higher batch sizes are possible at lower resolutions or on GPUs with more device memory.
 - `max_niis_to_use`:
   The maximum number of NiFTI files to use in a training epoch. Use this to define a shorter epoch, for example to quickly test visualisations are being saved correctly.
-- `nii_target_shape`:
-  Specifies the target resolution to generate images at as a list of three positive integers corresponding to integer powers of 2, for example `[128, 128, 128]` for a `128×128×128` resolution.
+- `resolution`:
+  Specifies the target resolution to generate images at along each of the three image dimensions, for example `128` for a `128×128×128` resolution. Must be an integer power of 2.
 - `visualise_training_pipeline_before_starting`:
   Set this to `true` to see a folder (`pipeline_test`, in the output folder) of augmented examples.
 
