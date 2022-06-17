@@ -51,281 +51,169 @@ def main(hyper_params):
     else:
         writer = None
 
-    if hyper_params["use_nii_data"]:
-        if "nii_target_shape" in hyper_params:
-            data_shape = hyper_params["nii_target_shape"]
-        else:
-            misc.print_0(
-                hyper_params,
-                "You must specify the resample target shape using the data_shape key!",
-            )
+    if "nii_target_shape" in hyper_params:
+        data_shape = hyper_params["nii_target_shape"]
+    else:
+        misc.print_0(
+            hyper_params,
+            "You must specify the resample target shape using the data_shape key!",
+        )
+        quit()
+
+    if hyper_params["resume_from_checkpoint"]:
+        state_dict_fullpath = os.path.join(
+            hyper_params["checkpoint_folder"], "state_dictionary.pt"
+        )
+        misc.print_0(hyper_params, "Resuming from checkpoint: " + state_dict_fullpath)
+
+        if not os.path.exists(state_dict_fullpath):
+            misc.print_0(hyper_params, "Checkpoint not found: " + state_dict_fullpath)
             quit()
 
-        if hyper_params["resume_from_checkpoint"]:
-            state_dict_fullpath = os.path.join(
-                hyper_params["checkpoint_folder"], "state_dictionary.pt"
-            )
+        checkpoint = torch.load(state_dict_fullpath, map_location="cpu")
+
+        if hyper_params["sequence_type"] == "dwi":
+            nifti_b1000_filenames = checkpoint["nifti_b1000_filenames"]
             misc.print_0(
-                hyper_params, "Resuming from checkpoint: " + state_dict_fullpath
+                hyper_params, "Number of niftis: " + str(len(nifti_b1000_filenames))
             )
-
-            if not os.path.exists(state_dict_fullpath):
-                misc.print_0(
-                    hyper_params, "Checkpoint not found: " + state_dict_fullpath
-                )
-                quit()
-
-            checkpoint = torch.load(state_dict_fullpath, map_location="cpu")
-
-            if hyper_params["sequence_type"] == "dwi":
-                nifti_b1000_filenames = checkpoint["nifti_b1000_filenames"]
-                misc.print_0(
-                    hyper_params, "Number of niftis: " + str(len(nifti_b1000_filenames))
-                )
-                nifti_b1000_paths = [
-                    os.path.join(hyper_params["nifti_dwi_dir"], name)
-                    for name in nifti_b1000_filenames
-                ]
-            elif hyper_params["sequence_type"] == "flair":
-                filenames_flair = checkpoint["filenames_flair"]
-                misc.print_0(
-                    hyper_params, "Number of niftis: " + str(len(filenames_flair))
-                )
-                nifti_paths_flair = [
-                    hyper_params["nifti_dir"] / name for name in filenames_flair
-                ]
-                nifti_b1000_filenames = filenames_flair
-                nifti_b1000_paths = nifti_paths_flair
-        else:
-            misc.print_0(
-                hyper_params, "Sequence type: " + hyper_params["sequence_type"]
-            )
-            misc.print_0(
-                hyper_params,
-                f"nifti_dir found in hyper_params: {hyper_params['nifti_dir']}",
-            )
-            nifti_paths_flair = glob.glob(
-                str(hyper_params["nifti_dir"] / hyper_params["nifti_filename_pattern"])
-            )
-            filenames_flair = [os.path.basename(path) for path in nifti_paths_flair]
-            eids = [f.split("_")[0] for f in filenames_flair]
-
-            if misc.key_is_true(hyper_params, "load_metadata"):
-                misc.print_0(
-                    hyper_params,
-                    "Loading metadata and partitioning data into normal/abnormal",
-                )
-                filename = (
-                    hyper_params["biobank_eids_dir"]
-                    + "biobank_eids_with_white_matter_hyperintensities.csv"
-                )
-                eids_with_lesions = []
-                wml_volumes = []
-                with open(filename) as csvDataFile:
-                    csvReader = csv.reader(csvDataFile)
-                    for row in csvReader:
-                        eids_with_lesions.append(row[0])
-                        wml_volumes.append(row[1])
-
-                del eids_with_lesions[0]
-                del wml_volumes[0]
-                wml_volumes = [float(v) for v in wml_volumes]
-
-                misc.print_0(
-                    hyper_params,
-                    f"Mean wml vol: {np.mean(wml_volumes)}; std: {np.std(wml_volumes)}",
-                )
-                wml_mean = np.mean(wml_volumes)
-
-                ind_normal = wml_volumes <= wml_mean
-                eids_normal = [a for a, b in zip(eids_with_lesions, ind_normal) if b]
-                eids_normal = [f for f in eids if f in eids_normal]
-
-                ind_abnormal = wml_volumes > wml_mean
-                eids_abnormal = [
-                    a for a, b in zip(eids_with_lesions, ind_abnormal) if b
-                ]
-                eids_abnormal = [f for f in eids if f in eids_abnormal]
-                misc.print_0(
-                    hyper_params,
-                    (
-                        f"Number of normals: {str(len(eids_normal))}; "
-                        f"number of abnormals: {str(len(eids_abnormal))}"
-                    ),
-                )
-
-                filenames_flair = [
-                    f for f in filenames_flair if f.split("_")[0] in eids_normal
-                ]
-                nifti_paths_flair = [
-                    hyper_params["nifti_dir"] / name for name in filenames_flair
-                ]
-
+            nifti_b1000_paths = [
+                os.path.join(hyper_params["nifti_dwi_dir"], name)
+                for name in nifti_b1000_filenames
+            ]
+        elif hyper_params["sequence_type"] == "flair":
+            filenames_flair = checkpoint["filenames_flair"]
+            misc.print_0(hyper_params, "Number of niftis: " + str(len(filenames_flair)))
+            nifti_paths_flair = [
+                hyper_params["nifti_dir"] / name for name in filenames_flair
+            ]
             nifti_b1000_filenames = filenames_flair
             nifti_b1000_paths = nifti_paths_flair
-
-            if "max_niis_to_use" in hyper_params:
-                misc.print_0(
-                    hyper_params,
-                    "Restricting to only "
-                    + str(hyper_params["max_niis_to_use"])
-                    + " niftis",
-                )
-                filenames_flair = filenames_flair[0 : hyper_params["max_niis_to_use"]]
-                # filenames_seg = filenames_seg[0:hyper_params['max_niis_to_use']]
-                nifti_b1000_filenames = nifti_b1000_filenames[
-                    0 : hyper_params["max_niis_to_use"]
-                ]
-                nifti_paths_flair = nifti_paths_flair[
-                    0 : hyper_params["max_niis_to_use"]
-                ]
-                # nifti_paths_seg = nifti_paths_seg[0:hyper_params['max_niis_to_use']]
-                nifti_b1000_paths = nifti_b1000_paths[
-                    0 : hyper_params["max_niis_to_use"]
-                ]
-
-                misc.print_0(
-                    hyper_params, "B_1000s: " + str(len(nifti_b1000_filenames))
-                )
-
-        training_set_size = np.floor(
-            len(nifti_b1000_paths) * hyper_params["train_frac"]
-        ).astype(np.int32)
-        validation_set_size = len(nifti_b1000_paths) - training_set_size
-        misc.print_0(hyper_params, "Training niftis: " + str(training_set_size))
-        misc.print_0(hyper_params, "Validation niftis: " + str(validation_set_size))
-
-        train_files = [
-            {"full_brain": x} for x in zip(nifti_paths_flair[0:training_set_size])
-        ]
-        val_files = [
-            {"full_brain": x} for x in zip(nifti_paths_flair[training_set_size::])
-        ]
-
-        val_transforms, train_transforms = create_data_transformations(
-            hyper_params, hyper_params["device"]
-        )
-
-        dataset_train = Dataset(data=train_files, transform=train_transforms)
-        dataset_val = Dataset(data=val_files, transform=val_transforms)
-
-        pin_memory = True
-        cardinality_train = len(dataset_train)
-        cardinality_val = len(dataset_val)
-        hyper_params["cardinality_train"] = cardinality_train
-        hyper_params["cardinality_val"] = cardinality_val
-
-        is_3d = True
-        is_colour = False
-
-        batch_count_train = np.ceil(
-            cardinality_train / hyper_params["batch_size"]
-        ).astype(np.int32)
-        batch_count_val = np.ceil(cardinality_val / hyper_params["batch_size"]).astype(
-            np.int32
-        )
-
-        misc.print_0(hyper_params, "Training set size: " + str(cardinality_train))
-        misc.print_0(hyper_params, "Validation set size: " + str(cardinality_val))
-        misc.print_0(
-            hyper_params, "Training batches per epoch: " + str(batch_count_train)
-        )
-        misc.print_0(
-            hyper_params, "Validation batches per epoch: " + str(batch_count_val)
-        )
-
-        hyper_params["data_shape"] = data_shape
-        hyper_params["data_is_3d"] = is_3d
-        hyper_params["data_is_colour"] = is_colour
-
     else:
-        print("JPEG directory specified in hyperparameters")
-        print("JPEG base dir: " + hyper_params["jpeg_dir"])
-
-        from torchvision import transforms
-        from ..data_tools.jpeg_dataset import JPEGDataset
-
-        jpeg_dir = hyper_params["jpeg_dir"]
-        file_names = [
-            f for f in os.listdir(jpeg_dir) if os.path.isfile(os.path.join(jpeg_dir, f))
-        ]
-        csv_attr_path = None
-
-        if "max_jpegs_to_use" in hyper_params:
-            file_names = file_names[0 : hyper_params["max_jpegs_to_use"]]
-
-        train_frac = hyper_params["train_frac"]
-        print(
-            "Creating training/validation set split: proportion for training: "
-            + str(train_frac)
+        misc.print_0(hyper_params, "Sequence type: " + hyper_params["sequence_type"])
+        misc.print_0(
+            hyper_params,
+            f"nifti_dir found in hyper_params: {hyper_params['nifti_dir']}",
         )
-        cardinality = len(file_names)
-        cardinality_train = int(train_frac * cardinality)
+        nifti_paths_flair = glob.glob(
+            str(hyper_params["nifti_dir"] / hyper_params["nifti_filename_pattern"])
+        )
+        filenames_flair = [os.path.basename(path) for path in nifti_paths_flair]
+        eids = [f.split("_")[0] for f in filenames_flair]
 
-        if hyper_params["resume_from_checkpoint"]:
-            # Overwrite the file listings using the lists in the checkpoint
-            state_dict_fullpath = os.path.join(
-                hyper_params["checkpoint_folder"], "state_dictionary.pt"
-            )
+        if misc.key_is_true(hyper_params, "load_metadata"):
             misc.print_0(
-                hyper_params, "Resuming from checkpoint: " + state_dict_fullpath
+                hyper_params,
+                "Loading metadata and partitioning data into normal/abnormal",
+            )
+            filename = (
+                hyper_params["biobank_eids_dir"]
+                + "biobank_eids_with_white_matter_hyperintensities.csv"
+            )
+            eids_with_lesions = []
+            wml_volumes = []
+            with open(filename) as csvDataFile:
+                csvReader = csv.reader(csvDataFile)
+                for row in csvReader:
+                    eids_with_lesions.append(row[0])
+                    wml_volumes.append(row[1])
+
+            del eids_with_lesions[0]
+            del wml_volumes[0]
+            wml_volumes = [float(v) for v in wml_volumes]
+
+            misc.print_0(
+                hyper_params,
+                f"Mean wml vol: {np.mean(wml_volumes)}; std: {np.std(wml_volumes)}",
+            )
+            wml_mean = np.mean(wml_volumes)
+
+            ind_normal = wml_volumes <= wml_mean
+            eids_normal = [a for a, b in zip(eids_with_lesions, ind_normal) if b]
+            eids_normal = [f for f in eids if f in eids_normal]
+
+            ind_abnormal = wml_volumes > wml_mean
+            eids_abnormal = [a for a, b in zip(eids_with_lesions, ind_abnormal) if b]
+            eids_abnormal = [f for f in eids if f in eids_abnormal]
+            misc.print_0(
+                hyper_params,
+                (
+                    f"Number of normals: {str(len(eids_normal))}; "
+                    f"number of abnormals: {str(len(eids_abnormal))}"
+                ),
             )
 
-            if not os.path.exists(state_dict_fullpath):
-                misc.print_0(
-                    hyper_params, "Checkpoint not found: " + state_dict_fullpath
-                )
-                quit()
-
-            checkpoint = torch.load(state_dict_fullpath, map_location="cpu")
-            file_names_train = checkpoint["file_names_train"]
-            file_names_val = checkpoint["file_names_val"]
-
-            if "max_jpegs_to_use" in hyper_params:
-                # Just in case I change this value and then resume training...
-                file_names = file_names[0 : hyper_params["max_jpegs_to_use"]]
-
-        else:
-            file_names_train = file_names[0:cardinality_train]
-            file_names_val = file_names[cardinality_train:]
-
-        train_transforms = transforms.Compose(
-            [
-                # transforms.RandomAffine(3, translate=(0, 0.1), scale=(0.75, 1),
-                #                         shear=3, resample=Image.BILINEAR,
-                #                         fillcolor=0),
-                transforms.Resize(hyper_params["jpeg_target_shape"][0]),
-                transforms.CenterCrop(hyper_params["jpeg_target_shape"][0]),
-                # transforms.RandomVerticalFlip(p=0.5),
-                # transforms.ToTensor()
+            filenames_flair = [
+                f for f in filenames_flair if f.split("_")[0] in eids_normal
             ]
-        )
-
-        val_transforms = transforms.Compose(
-            [
-                transforms.Resize(hyper_params["jpeg_target_shape"][0]),
-                transforms.CenterCrop(hyper_params["jpeg_target_shape"][0]),
-                # transforms.ToTensor()
+            nifti_paths_flair = [
+                hyper_params["nifti_dir"] / name for name in filenames_flair
             ]
-        )
 
-        dataset_train = JPEGDataset(
-            jpeg_dir, file_names_train, csv_attr_path, train_transforms, hyper_params
-        )
-        dataset_val = JPEGDataset(
-            jpeg_dir, file_names_val, csv_attr_path, val_transforms, hyper_params
-        )
+        nifti_b1000_filenames = filenames_flair
+        nifti_b1000_paths = nifti_paths_flair
 
-        cardinality_train = len(dataset_train)
-        cardinality_val = len(dataset_val)
+        if "max_niis_to_use" in hyper_params:
+            misc.print_0(
+                hyper_params,
+                "Restricting to only "
+                + str(hyper_params["max_niis_to_use"])
+                + " niftis",
+            )
+            filenames_flair = filenames_flair[0 : hyper_params["max_niis_to_use"]]
+            # filenames_seg = filenames_seg[0:hyper_params['max_niis_to_use']]
+            nifti_b1000_filenames = nifti_b1000_filenames[
+                0 : hyper_params["max_niis_to_use"]
+            ]
+            nifti_paths_flair = nifti_paths_flair[0 : hyper_params["max_niis_to_use"]]
+            # nifti_paths_seg = nifti_paths_seg[0:hyper_params['max_niis_to_use']]
+            nifti_b1000_paths = nifti_b1000_paths[0 : hyper_params["max_niis_to_use"]]
 
-        is_3d = False
-        data_shape = [1] + hyper_params["jpeg_target_shape"] * 2
-        is_colour = False
+            misc.print_0(hyper_params, "B_1000s: " + str(len(nifti_b1000_filenames)))
 
-        hyper_params["data_shape"] = data_shape
-        hyper_params["data_is_3d"] = is_3d
-        hyper_params["data_is_colour"] = is_colour
+    training_set_size = np.floor(
+        len(nifti_b1000_paths) * hyper_params["train_frac"]
+    ).astype(np.int32)
+    validation_set_size = len(nifti_b1000_paths) - training_set_size
+    misc.print_0(hyper_params, "Training niftis: " + str(training_set_size))
+    misc.print_0(hyper_params, "Validation niftis: " + str(validation_set_size))
+
+    train_files = [
+        {"full_brain": x} for x in zip(nifti_paths_flair[0:training_set_size])
+    ]
+    val_files = [{"full_brain": x} for x in zip(nifti_paths_flair[training_set_size::])]
+
+    val_transforms, train_transforms = create_data_transformations(
+        hyper_params, hyper_params["device"]
+    )
+
+    dataset_train = Dataset(data=train_files, transform=train_transforms)
+    dataset_val = Dataset(data=val_files, transform=val_transforms)
+
+    pin_memory = True
+    cardinality_train = len(dataset_train)
+    cardinality_val = len(dataset_val)
+    hyper_params["cardinality_train"] = cardinality_train
+    hyper_params["cardinality_val"] = cardinality_val
+
+    is_3d = True
+    is_colour = False
+
+    batch_count_train = np.ceil(cardinality_train / hyper_params["batch_size"]).astype(
+        np.int32
+    )
+    batch_count_val = np.ceil(cardinality_val / hyper_params["batch_size"]).astype(
+        np.int32
+    )
+
+    misc.print_0(hyper_params, "Training set size: " + str(cardinality_train))
+    misc.print_0(hyper_params, "Validation set size: " + str(cardinality_val))
+    misc.print_0(hyper_params, "Training batches per epoch: " + str(batch_count_train))
+    misc.print_0(hyper_params, "Validation batches per epoch: " + str(batch_count_val))
+
+    hyper_params["data_shape"] = data_shape
+    hyper_params["data_is_3d"] = is_3d
+    hyper_params["data_is_colour"] = is_colour
 
     if (
         "visualise_training_pipeline_before_starting" in hyper_params
@@ -982,16 +870,11 @@ def main(hyper_params):
                 if "kl_multiplier" in hyper_params:
                     checkpoint_dict["kl_multiplier"] = hyper_params["kl_multiplier"]
 
-                if hyper_params["use_nii_data"]:
-                    if hyper_params["sequence_type"] == "dwi":
-                        checkpoint_dict["nifti_b1000_filenames"] = nifti_b1000_filenames
-                    elif hyper_params["sequence_type"] == "flair":
-                        checkpoint_dict["filenames_flair"] = filenames_flair
-                        # checkpoint_dict['filenames_seg'] = filenames_seg
-                else:
-                    checkpoint_dict["file_names_train"] = file_names_train
-                    checkpoint_dict["file_names_val"] = file_names_val
-                    checkpoint_dict["file_names"] = file_names
+                if hyper_params["sequence_type"] == "dwi":
+                    checkpoint_dict["nifti_b1000_filenames"] = nifti_b1000_filenames
+                elif hyper_params["sequence_type"] == "flair":
+                    checkpoint_dict["filenames_flair"] = filenames_flair
+                    # checkpoint_dict['filenames_seg'] = filenames_seg
 
                 if (
                     hyper_params["likelihood"] == "Gaussian"
@@ -1038,11 +921,7 @@ def main(hyper_params):
                 with amp.autocast(hyper_params["half_precision"]):
                     batch = next(iter(loader_val))
 
-                    if hyper_params["use_nii_data"]:
-                        # In this case use dictionaries
-                        current_input = batch["full_brain"].to(hyper_params["device"])
-                    else:
-                        current_input = batch[0].to(hyper_params["device"])
+                    current_input = batch["full_brain"].to(hyper_params["device"])
 
                     if hyper_params["half_precision"]:
                         current_input = current_input.type(torch.float32)
@@ -1065,28 +944,16 @@ def main(hyper_params):
                         max = len(hyper_params["channels_per_latent"])
 
                         if "hidden_spatial_dims" in hyper_params:
-                            if hyper_params["use_nii_data"]:
-                                temp = (
-                                    hyper_params["nii_target_shape"][0:1]
-                                    + hyper_params["hidden_spatial_dims"][:]
-                                )
-                            else:
-                                temp = (
-                                    hyper_params["jpeg_target_shape"]
-                                    + hyper_params["hidden_spatial_dims"][:]
-                                )
-
+                            temp = (
+                                hyper_params["nii_target_shape"][0:1]
+                                + hyper_params["hidden_spatial_dims"][:]
+                            )
                             res_to_sample_from_prior = temp[::-1][min:]
                         else:
                             res_to_sample_from_prior = [2**p for p in range(min, max)]
 
-                        if hyper_params["use_nii_data"]:
-                            # In this case use dictionaries
-                            current_input = batch["full_brain"].to(
-                                hyper_params["device"]
-                            )
-                        else:
-                            current_input = batch[0].to(hyper_params["device"])
+                        # In this case use dictionaries
+                        current_input = batch["full_brain"].to(hyper_params["device"])
 
                         input_dictionary_1 = {"data": current_input}
 

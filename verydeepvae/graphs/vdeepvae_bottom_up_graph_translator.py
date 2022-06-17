@@ -32,10 +32,7 @@ class Graph:
             # New code for custom latent sizes
             self.pooling_ops = []
             for size in hyper_params["hidden_spatial_dims"]:
-                if hyper_params["use_nii_data"]:
-                    output_size = [size] * 3
-                else:
-                    output_size = [size] * 2
+                output_size = [size] * 3
 
                 self.pooling_ops.append(
                     UnPoolingBlock(

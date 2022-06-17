@@ -117,7 +117,6 @@ def configuration_dict():
         "apply_augmentations_to_validation_set": False,
         "visualise_training_pipeline_before_starting": True,
         "discard_abnormally_small_niftis": True,
-        "use_nii_data": True,
         "nifti_standardise": True,
         "shuffle_niftis": False,
         "save_recons_to_mat": False,

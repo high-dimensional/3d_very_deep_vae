@@ -55,7 +55,6 @@
     "apply_augmentations_to_validation_set": false,
     "visualise_training_pipeline_before_starting": true,
     "discard_abnormally_small_niftis": true,
-    "use_nii_data": true,
     "nii_target_shape": [64, 64, 64],
     "nifti_standardise": true,
     "shuffle_niftis": false,

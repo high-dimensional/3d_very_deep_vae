@@ -44,10 +44,7 @@ class Graph:
         if "hidden_spatial_dims" in hyper_params:
             self.unpooling_ops = []
             for size in hyper_params["hidden_spatial_dims"][0:-1][::-1]:
-                if hyper_params["use_nii_data"]:
-                    output_size = [size] * 3
-                else:
-                    output_size = [size] * 2
+                output_size = [size] * 3
 
                 self.unpooling_ops.append(
                     UnPoolingBlock(
@@ -56,10 +53,7 @@ class Graph:
                         half_precision=hyper_params["half_precision"],
                     )
                 )
-            if hyper_params["use_nii_data"]:
-                output_size = hyper_params["nii_target_shape"]
-            else:
-                output_size = hyper_params["jpeg_target_shape"] * 2
+            output_size = hyper_params["nii_target_shape"]
             self.unpooling_ops.append(
                 UnPoolingBlock(
                     hyper_params=hyper_params,

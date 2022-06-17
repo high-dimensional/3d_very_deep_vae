@@ -85,13 +85,7 @@ def go(input_dict):
 
         with amp.autocast(hyper_params["half_precision"]):
 
-            if hyper_params["use_nii_data"]:
-                current_input = batch["full_brain"].to(
-                    device
-                )  # In this case use dictionaries
-            else:
-                current_input = batch[0].to(device)
-
+            current_input = batch["full_brain"].to(device)
             input_dictionary_1 = {"data": current_input}
             batch_target_features = current_input
             data_dictionary_1 = bottom_up_graph_1.model(input_dictionary_1)
