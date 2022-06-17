@@ -20,6 +20,7 @@ import math as maths
 import nibabel as nib
 from ..data_tools.data_transformations import create_data_transformations
 import monai
+import matplotlib as mpl
 
 
 def train_model(hyper_params):
@@ -38,6 +39,9 @@ def train_model(hyper_params):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     torch.use_deterministic_algorithms(True)
+
+    # Use non-interactive AGG backend for producing Matplotlib plots
+    mpl.use("AGG")
 
     hyper_params = environment.setup_environment(hyper_params)
 
