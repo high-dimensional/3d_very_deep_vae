@@ -93,6 +93,14 @@
                 {"type": "integer", "minimum": 0, "maximum": 4294967295}
             ]
         },
+        "max_niis_to_use": {
+            "description": "The maximum number of NiFTI files to use in a training epoch. Use this to define a shorter epoch, for example to quickly test visualisations are being saved correctly. Using a `null` value will result in all available files being used.",
+            "default": null,
+            "oneOf": [
+                {"type": "null"},
+                {"type": "integer", "exclusiveMinimum": 0}
+            ]
+        },
         "warmup_iterations": {
             "description": "Iterations to wait before skipping excessively large gradient updates",
             "type": "integer",
@@ -154,7 +162,7 @@
             "exclusiveMinimum": 0,
             "default": 1e12
         },
-        "std_clamp_bounds_hidden": {
+        "scale_hidden_clamp_bounds": {
             "description": "Lower and upper bound on the standard deviation of the prior and posterior Gaussian distributions of the latent variables",
             "type": "array",
             "items": {
@@ -165,8 +173,8 @@
             "maxItems": 2,
             "default": [0.001, 1]
         },
-        "std_clamp_bounds_output": {
-            "description": "Lower and upper bound on standard deviation of the Gaussian distribution of the input given the latent",
+        "scale_output_clamp_bounds": {
+            "description": "Lower and upper bound on scale (standard deviation of the Gaussian distribution of the input given the latent",
             "type": "array",
             "items": {
                 "type": "number",
@@ -176,7 +184,7 @@
             "maxItems": 2,
             "default": [0.01, 1]
         },
-        "latents_per_channel_weight_sharing": {
+        "latent_feature_maps_per_resolution_weight_sharing": {
             "description": "Either, an array of boolean flags specifying whether to use a shared set of weights to predict the latents at that resolution, one per resolution in decreasing order (that is array length must be equal to base-2 logarithm of `resolution` plus one), or, one of the strings `\"all\"` or `\"none\"`, corresponding to flags being `true` or `false` across all resolutions respectively.",
             "oneOf": [
                 {
@@ -232,20 +240,11 @@
             "type": "boolean",
             "default": false
         },
-        "print_model": {
-            "description": "Whether to display text representation of model at start of training",
-            "type": "boolean",
-            "default": false
-        },
-        "use_tanh_output": {
-            "description": "Whether to use hyperbolic tangent activation function (with range `[-1, 1]`) in computing location of Gaussian distribution given latents rather than logistic sigmoid (with range `[0, 1]`).",
-            "type": "boolean",
-            "default": true
-        },
-        "use_abs_not_square": {
-            "description": "Use absolute difference rather than sum of squares when computing the log likelihood",
-            "type": "boolean",
-            "default": false
+        "output_activation_function": {
+            "description": "Which activation function to use in computing location of Gaussian distribution given latents. Choices are `\"tanh\"` corresponding to hyperbolic tangent activation function (with range `[-1, 1]`), `\"sigmoid\"` corresponding to logistic sigmoid (with range `[0, 1]`) or `\"identity\"` corresponding to identity function.",
+            "type": "string",
+            "enum": ["tanh", "sigmoid", "identity"],
+            "default": "tanh"
         },
         "plot_gradient_norms": {
             "description": "Plot the norms of the gradients after each epoch",
@@ -267,7 +266,7 @@
             "type": "boolean",
             "default": true
         },
-        "predict_x_var": {
+        "predict_x_scale": {
             "description": "Model the scale, not just the location, of the Gaussian distribution of the input given its latent",
             "type": "boolean",
             "default": true
@@ -312,25 +311,15 @@
             "type": "boolean",
             "default": false
         },
-        "shuffle_niftis": {
-            "description": "Randomise the order of the dataset before splitting into train and test sets.",
-            "type": "boolean",
-            "default": false
-        },
         "convolutional_downsampling": {
             "description": "Down-sample using stride-two convolutions, rather than x2 nearest neighbour downsampling",
             "type": "boolean",
             "default": false
         },
-        "predict_x_var_with_sigmoid": {
+        "predict_x_scale_with_sigmoid": {
             "description": "Predict the scale of the Gaussian distribution of the input given its latent using a (scaled) sigmoid, rather than predicting the natural logarithm of the scale then exponentiating",
             "type": "boolean",
             "default": true
-        },
-        "base_recons_on_train_loader": {
-            "description": "When plotting reconstructions, reconstruct the training data rather than the validation data",
-            "type": "boolean",
-            "default": false
         },
         "only_use_one_conv_block_at_top": {
             "description": "Use a truncated sequence of layers to predict from the latents the location and scale of the Gaussian distribution of the input given its latent",
