@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 from typing import Any, Dict
+import jsonschema
 import torch
 from verydeepvae.orchestration.training import train_model
 
@@ -126,6 +127,18 @@ def post_process_hyperparameters(
             ] * size_as_function_of_latent_feature_maps_per_resolution(
                 hyperparameters["latent_feature_maps_per_resolution"]
             )
+            
+            
+def load_config_schema():
+    schema_path = Path(__file__).parent.parent / "model_configuration.schema.json"
+    with open(schema_path, "r") as f:
+        try:
+            schema = json.load(f)
+        except json.JSONDecodeError as e:
+            raise json.JSONDecodeError(
+                f"Configuration schema file {schema_path} not valid JSON"
+            ) from e
+    return schema
 
 
 def main():
@@ -145,6 +158,8 @@ def main():
             raise json.JSONDecodeError(
                 f"Configuration file {cli_args.json_config_file} not valid JSON"
             ) from e
+    schema = load_config_schema()
+    jsonschema.validate(hyperparameters, schema)
     post_process_hyperparameters(hyperparameters, cli_args)
     torch.multiprocessing.set_start_method("spawn")
     train_model(hyperparameters)
