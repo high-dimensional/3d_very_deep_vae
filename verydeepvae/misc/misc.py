@@ -1,29 +1,6 @@
 import torch
 import numpy as np
 from tqdm import tqdm
-import torch.distributed as dist
-
-
-def average_gradients(model):
-    """
-    Copied from https://pytorch.org/tutorials/intermediate/dist_tuto.html
-    This just in-place averages all gradients in 'model' over all ranks in the world
-    """
-    size = float(dist.get_world_size())
-    for param in model.parameters():
-        if param.grad is not None:
-            dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
-            param.grad.data /= size
-
-
-def torch_nansafe_mean(x):
-    if x.shape[0] == 0:
-        out = torch.mean(
-            torch.zeros(1, device=x.device, requires_grad=False)
-        )  # A hack to get correct shape!
-    else:
-        out = torch.mean(x)
-    return out
 
 
 def count_gradient_nans(
@@ -58,9 +35,8 @@ def count_gradient_nans(
     ).item()
     gradient_norms["top_down_graph_mu"].append([iteration, grad_norm_td2])
     if (
-        hyper_params["likelihood"] == "Gaussian"
-        and hyper_params["separate_output_loc_scale_convs"]
-        and hyper_params["predict_x_var"]
+        hyper_params["separate_output_loc_scale_convs"]
+        and hyper_params["predict_x_scale"]
     ):
         grad_norm_td3 = torch.nn.utils.clip_grad_norm_(
             top_down_graph.x_var.parameters(), c
@@ -71,9 +47,8 @@ def count_gradient_nans(
         s = hyper_params["gradient_skipping_value"]
         do_not_skip = grad_norm_bu1 < s and grad_norm_td1 < s and grad_norm_td2 < s
         if (
-            hyper_params["likelihood"] == "Gaussian"
-            and hyper_params["separate_output_loc_scale_convs"]
-            and hyper_params["predict_x_var"]
+            hyper_params["separate_output_loc_scale_convs"]
+            and hyper_params["predict_x_scale"]
         ):
             do_not_skip *= grad_norm_td3 < s
     else:
@@ -85,9 +60,8 @@ def count_gradient_nans(
     nan_count_grads += np.sum(np.isnan(grad_norm_td1)) + np.sum(np.isinf(grad_norm_td1))
     nan_count_grads += np.sum(np.isnan(grad_norm_td2)) + np.sum(np.isinf(grad_norm_td2))
     if (
-        hyper_params["likelihood"] == "Gaussian"
-        and hyper_params["separate_output_loc_scale_convs"]
-        and hyper_params["predict_x_var"]
+        hyper_params["separate_output_loc_scale_convs"]
+        and hyper_params["predict_x_scale"]
     ):
         nan_count_grads += np.sum(np.isnan(grad_norm_td3)) + np.sum(
             np.isinf(grad_norm_td3)
@@ -138,12 +112,9 @@ def gaussian_likelihood(batch_target_features, x_mu, x_var, x_log_var, hyper_par
     :param hyper_params:
     :return:
     """
-    if "use_abs_not_square" in hyper_params and hyper_params["use_abs_not_square"]:
-        squared_difference = torch.abs(batch_target_features - x_mu)
-    else:
-        squared_difference = torch.square(batch_target_features - x_mu)
+    squared_difference = torch.square(batch_target_features - x_mu)
 
-    if hyper_params["predict_x_var"]:
+    if hyper_params["predict_x_scale"]:
         squared_diff_normed = torch.true_divide(squared_difference, x_var)
         log_likelihood_per_dim = -0.5 * (
             x_log_var + np.log(2 * np.pi) + squared_diff_normed
@@ -191,14 +162,14 @@ def gaussian_output(
     # x_var = None
     # x_log_var = None
 
-    if hyper_params["likelihood"] == "Gaussian" and hyper_params["predict_x_var"]:
+    if hyper_params["predict_x_scale"]:
         # Currently only predicting separate locs and scales for Gaussian p(x|z).
         if hyper_params["separate_output_loc_scale_convs"]:
             data_dictionary_x_var = top_down_graph.x_var(data_dictionary_latents)
 
-            if key_is_true(hyper_params, "predict_x_var_with_sigmoid"):
-                lower = hyper_params["variance_output_clamp_bounds"][0]
-                upper = hyper_params["variance_output_clamp_bounds"][1]
+            if key_is_true(hyper_params, "predict_x_scale_with_sigmoid"):
+                lower = hyper_params["scale_output_clamp_bounds"][0]
+                upper = hyper_params["scale_output_clamp_bounds"][1]
                 x_std = lower + (upper - lower) * torch.sigmoid(
                     data_dictionary_x_var["data"]
                 )
@@ -206,11 +177,11 @@ def gaussian_output(
                 x_log_var = 2 * torch.log(x_std)
             else:
                 x_log_var = data_dictionary_x_var["data"]
-                if hyper_params["variance_output_clamp_bounds"] is not None:
+                if hyper_params["scale_output_clamp_bounds"] is not None:
                     x_log_var = torch.clamp(
                         x_log_var,
-                        hyper_params["variance_output_clamp_bounds"][0],
-                        hyper_params["variance_output_clamp_bounds"][1],
+                        hyper_params["scale_output_clamp_bounds"][0],
+                        hyper_params["scale_output_clamp_bounds"][1],
                     )
                 x_var = torch.exp(x_log_var)
                 x_std = torch.exp(0.5 * x_log_var)
@@ -218,9 +189,9 @@ def gaussian_output(
         else:
             x_mu = data_dictionary_x_mu["data"][:, 0:num_modalities, ...]
 
-            if key_is_true(hyper_params, "predict_x_var_with_sigmoid"):
-                lower = hyper_params["variance_output_clamp_bounds"][0]
-                upper = hyper_params["variance_output_clamp_bounds"][1]
+            if key_is_true(hyper_params, "predict_x_scale_with_sigmoid"):
+                lower = hyper_params["scale_output_clamp_bounds"][0]
+                upper = hyper_params["scale_output_clamp_bounds"][1]
                 x_std = lower + (upper - lower) * torch.sigmoid(
                     data_dictionary_x_mu["data"][
                         :, num_modalities : 2 * num_modalities, ...
@@ -232,11 +203,11 @@ def gaussian_output(
                 x_log_var = data_dictionary_x_mu["data"][
                     :, num_modalities : 2 * num_modalities, ...
                 ]
-                if hyper_params["variance_output_clamp_bounds"] is not None:
+                if hyper_params["scale_output_clamp_bounds"] is not None:
                     x_log_var = torch.clamp(
                         x_log_var,
-                        hyper_params["variance_output_clamp_bounds"][0],
-                        hyper_params["variance_output_clamp_bounds"][1],
+                        hyper_params["scale_output_clamp_bounds"][0],
+                        hyper_params["scale_output_clamp_bounds"][1],
                     )
                 x_var = torch.exp(x_log_var)
                 x_std = torch.exp(0.5 * x_log_var)
@@ -265,15 +236,6 @@ def tqdm_on_rank_0(hyper_params, x, desc):
         return x
     else:
         return tqdm(x, desc)
-
-
-class dummy_context_mgr:
-    # Copied from https://stackoverflow.com/questions/27803059/conditional-with-statement-in-python
-    def __enter__(self):
-        return None
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        return False
 
 
 def kl_perturbed_prior(delta_mu, delta_log_var, log_var):
@@ -309,77 +271,6 @@ def kl_log_vars(mu, log_var, mu_2=None, log_var_2=None):
         # output = 0.5 * (torch.div(vars + squared_diff, torch.maximum(vars_2, eps)) - 1 + log_var_2 - log_var)
         output = 0.5 * (
             torch.div(vars + squared_diff, vars_2) - 1 + log_var_2 - log_var
-        )
-
-    output = output.view(output.shape[0], -1)
-    output = torch.sum(output, dim=1)
-    return output
-
-
-def kl_vars(mu, var, mu_2=None, var_2=None):
-    """
-    This is kl[N(mu, var) || N(mu_2, var_2)], where var and var_2 are the diagonals of the covariance matrices.
-    https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Multivariate_normal_distributions
-
-    MODIFIED TO TAKE VARS NOT LOG VARS!!
-    """
-
-    if mu_2 is None:
-        # KL between a given (diagonal) Gaussian and N(0,I)
-        output = 0.5 * (var + torch.square(mu) - 1 - torch.log(var))
-    else:
-        # KL between two given diagonal Gaussians
-        squared_diff = torch.square(mu - mu_2)
-        output = 0.5 * (
-            torch.div(var + squared_diff, var_2) - 1 + torch.log(var_2) - torch.log(var)
-        )
-
-    output = output.view(output.shape[0], -1)
-    output = torch.sum(output, dim=1)
-    return output
-
-
-def kl_stds_then_log_vars(mu, std, mu_2=None, log_var_2=None):
-    """
-    This is kl[N(mu, var) || N(mu_2, var_2)], where var and var_2 are the diagonals of the covariance matrices.
-    https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Multivariate_normal_distributions
-
-    MODIFIED TO TAKE STDS THEN LOG VARS!!
-    """
-    var = torch.square(std)
-    if mu_2 is None:
-        # KL between a given (diagonal) Gaussian and N(0,I)
-        output = 0.5 * (var + torch.square(mu) - 1 - 2 * torch.log(std))
-    else:
-        # KL between two given (diagonal) Gaussian
-        var_2 = torch.exp(log_var_2)
-        squared_diff = torch.square(mu - mu_2)
-        output = 0.5 * (
-            torch.div(var + squared_diff, var_2) - 1 + log_var_2 - 2 * torch.log(std)
-        )
-
-    output = output.view(output.shape[0], -1)
-    output = torch.sum(output, dim=1)
-    return output
-
-
-def kl_vars_then_log_vars(mu, var, mu_2=None, log_var_2=None):
-    """
-    This is kl[N(mu, var) || N(mu_2, var_2)], where var and var_2 are the diagonals of the covariance matrices.
-    https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Multivariate_normal_distributions
-
-    MODIFIED TO TAKE VARS THEN LOG VARS!!
-    """
-
-    if mu_2 is None:
-        # KL between a given (diagonal) Gaussian and N(0,I)
-        output = 0.5 * (var + torch.square(mu) - 1 - torch.log(var))
-    else:
-        # KL between two given (diagonal) Gaussian
-        var_2 = torch.exp(log_var_2)
-        squared_diff = torch.square(mu - mu_2)
-        output = 0.5 * (
-            torch.div(var + squared_diff, var_2) - 1 + log_var_2 - torch.log(var)
         )
 
     output = output.view(output.shape[0], -1)
@@ -449,11 +340,6 @@ def sum_non_bias_l2_norms(parameters, multiplier=None):
     if multiplier is not None:
         l2_reg = multiplier * l2_reg
     return l2_reg
-
-
-def np_safe_divide(numer, denom):
-    denom[denom < 1e-5] = 1
-    return numer / denom
 
 
 def count_unique_parameters(parameters):

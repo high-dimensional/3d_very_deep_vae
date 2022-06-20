@@ -33,9 +33,7 @@ def create_data_transformations(
         keys = ["full_brain"]
 
     resize_block = [
-        monai_trans.Resized(
-            keys=keys, spatial_size=tuple(hyper_params["nii_target_shape"])
-        )
+        monai_trans.Resized(keys=keys, spatial_size=(hyper_params["resolution"],) * 3)
     ]
 
     if "veto_transformations" in hyper_params and hyper_params["veto_transformations"]:
@@ -58,9 +56,7 @@ def create_data_transformations(
 
         train_transforms += resize_block
 
-        if misc.key_is_true(hyper_params, "use_tanh_output") or misc.key_is_true(
-            hyper_params, "use_sigmoid_output"
-        ):
+        if hyper_params["output_activation_function"] in {"sigmoid", "tanh"}:
             train_transforms += [
                 ClampByPercentile(
                     keys=keys,
@@ -72,11 +68,11 @@ def create_data_transformations(
 
         train_transforms += [monai_trans.NormalizeIntensityd(keys=keys)]
 
-        if misc.key_is_true(hyper_params, "use_tanh_output"):
+        if hyper_params["output_activation_function"] == "tanh":
             train_transforms += [
                 monai_trans.ScaleIntensityd(keys=keys, minv=-1.0, maxv=1.0)
             ]
-        elif misc.key_is_true(hyper_params, "use_sigmoid_output"):
+        elif hyper_params["output_activation_function"] == "sigmoid":
             train_transforms += [
                 monai_trans.ScaleIntensityd(keys=keys, minv=0, maxv=1.0)
             ]
@@ -88,8 +84,8 @@ def create_data_transformations(
         if "min_small_crop_size" not in hyper_params:
             # This is a bit crude...
             hyper_params["min_small_crop_size"] = [
-                int(0.95 * x) for x in hyper_params["nii_target_shape"]
-            ]
+                int(0.95 * hyper_params["resolution"])
+            ] * 3
             hyper_params["rot_angle_in_rads"] = 2 * 3.14159 / 360 * (5)
             hyper_params["shear_angle_in_rads"] = 2 * 3.14159 / 360 * (5)
             hyper_params["translate_range"] = 10
@@ -152,18 +148,16 @@ def create_data_transformations(
             ThreeDHaircut(keys=keys, range=haircut_ranges, prob=prob_haircut),
         ]
 
-        if misc.key_is_true(hyper_params, "use_tanh_output") or misc.key_is_true(
-            hyper_params, "use_sigmoid_output"
-        ):
+        if hyper_params["output_activation_function"] in {"sigmoid", "tanh"}:
             train_transforms += [
                 ClampByPercentile(
                     keys=keys, lower=clamp_percentiles[0], upper=clamp_percentiles[1]
                 )
             ]
         train_transforms += [monai_trans.NormalizeIntensityd(keys=keys)]
-        if misc.key_is_true(hyper_params, "use_tanh_output"):
+        if hyper_params["output_activation_function"] == "tanh":
             train_transforms += [monai_trans.ScaleIntensityd(keys, minv=-1.0, maxv=1.0)]
-        elif misc.key_is_true(hyper_params, "use_sigmoid_output"):
+        elif hyper_params["output_activation_function"] == "sigmoid":
             train_transforms += [monai_trans.ScaleIntensityd(keys, minv=0, maxv=1.0)]
 
         train_transforms += [
@@ -260,14 +254,14 @@ def create_data_transformations(
 
         train_transforms += [
             monai_trans.Resized(
-                keys=keys, spatial_size=tuple(hyper_params["nii_target_shape"])
+                keys=keys, spatial_size=(hyper_params["resolution"],) * 3
             ),
             monai_trans.NormalizeIntensityd(keys=keys),
         ]
 
-        if misc.key_is_true(hyper_params, "use_tanh_output"):
+        if hyper_params["output_activation_function"] == "tanh":
             train_transforms += [monai_trans.ScaleIntensityd(keys, minv=-1.0, maxv=1.0)]
-        elif misc.key_is_true(hyper_params, "use_sigmoid_output"):
+        elif hyper_params["output_activation_function"] == "sigmoid":
             train_transforms += [monai_trans.ScaleIntensityd(keys, minv=0, maxv=1.0)]
 
         train_transforms = monai_trans.Compose(train_transforms)
@@ -296,9 +290,7 @@ def create_data_transformations(
 
             val_transforms += resize_block
 
-            if misc.key_is_true(hyper_params, "use_tanh_output") or misc.key_is_true(
-                hyper_params, "use_sigmoid_output"
-            ):
+            if hyper_params["output_activation_function"] in {"sigmoid", "tanh"}:
                 val_transforms += [
                     ClampByPercentile(
                         keys=keys,
@@ -307,11 +299,11 @@ def create_data_transformations(
                     )
                 ]
             val_transforms += [monai_trans.NormalizeIntensityd(keys=keys)]
-            if misc.key_is_true(hyper_params, "use_tanh_output"):
+            if hyper_params["output_activation_function"] == "tanh":
                 val_transforms += [
                     monai_trans.ScaleIntensityd(keys, minv=-1.0, maxv=1.0)
                 ]
-            elif misc.key_is_true(hyper_params, "use_sigmoid_output"):
+            elif hyper_params["output_activation_function"] == "sigmoid":
                 val_transforms += [monai_trans.ScaleIntensityd(keys, minv=0, maxv=1.0)]
 
             val_transforms = monai_trans.Compose(val_transforms)

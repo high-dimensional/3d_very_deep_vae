@@ -12,7 +12,7 @@ from ..graph_components.sigmoid_first_n_channels_block import (
 )
 
 
-class Graph:
+class TopDownGraph:
     """
     This is the top down part of the very deep VAE graph.
     """
@@ -44,10 +44,7 @@ class Graph:
         if "hidden_spatial_dims" in hyper_params:
             self.unpooling_ops = []
             for size in hyper_params["hidden_spatial_dims"][0:-1][::-1]:
-                if hyper_params["use_nii_data"]:
-                    output_size = [size] * 3
-                else:
-                    output_size = [size] * 2
+                output_size = [size] * 3
 
                 self.unpooling_ops.append(
                     UnPoolingBlock(
@@ -56,10 +53,7 @@ class Graph:
                         half_precision=hyper_params["half_precision"],
                     )
                 )
-            if hyper_params["use_nii_data"]:
-                output_size = hyper_params["nii_target_shape"]
-            else:
-                output_size = hyper_params["jpeg_target_shape"] * 2
+            output_size = (hyper_params["resolution"],) * 3
             self.unpooling_ops.append(
                 UnPoolingBlock(
                     hyper_params=hyper_params,
@@ -98,11 +92,11 @@ class Graph:
         # It is incremented before each TopDownBlock
         index_of_latent = -1
 
-        latents_per_chanel = hyper_params["latents_per_channel"][::-1]
+        latents_per_chanel = hyper_params["latent_feature_maps_per_resolution"][::-1]
 
-        self.weight_sharing_index = hyper_params["latents_per_channel_weight_sharing"][
-            ::-1
-        ]
+        self.weight_sharing_index = hyper_params[
+            "latent_feature_maps_per_resolution_weight_sharing"
+        ][::-1]
 
         groups = []
         self.latents_per_group = []
@@ -148,7 +142,7 @@ class Graph:
                 uppermost_block=True,
                 lateral_connection_channels=channels_in,
                 lateral_skip_con_to_use=current_lateral_skip_con,
-                variance_bounds=hyper_params["variance_hidden_clamp_bounds"],
+                variance_bounds=hyper_params["scale_hidden_clamp_bounds"],
                 precision_reweighting=hyper_params["use_precision_reweighting"],
                 separate_loc_scale_convs=hyper_params[
                     "separate_hidden_loc_scale_convs"
@@ -217,7 +211,7 @@ class Graph:
                         channels_for_latent=channels_per_latent[0],
                         lateral_connection_channels=channels_in,
                         lateral_skip_con_to_use=current_lateral_skip_con,
-                        variance_bounds=hyper_params["variance_hidden_clamp_bounds"],
+                        variance_bounds=hyper_params["scale_hidden_clamp_bounds"],
                         precision_reweighting=hyper_params["use_precision_reweighting"],
                         separate_loc_scale_convs=hyper_params[
                             "separate_hidden_loc_scale_convs"
@@ -373,9 +367,7 @@ class Graph:
                             channels_for_latent=channels_per_latent[k + 1],
                             lateral_connection_channels=lateral_connection_channels,
                             lateral_skip_con_to_use=current_lateral_skip_con,
-                            variance_bounds=hyper_params[
-                                "variance_hidden_clamp_bounds"
-                            ],
+                            variance_bounds=hyper_params["scale_hidden_clamp_bounds"],
                             precision_reweighting=hyper_params[
                                 "use_precision_reweighting"
                             ],
@@ -450,7 +442,7 @@ class Graph:
                                 lateral_connection_channels=lateral_connection_channels,
                                 lateral_skip_con_to_use=current_lateral_skip_con,
                                 variance_bounds=hyper_params[
-                                    "variance_hidden_clamp_bounds"
+                                    "scale_hidden_clamp_bounds"
                                 ],
                                 precision_reweighting=hyper_params[
                                     "use_precision_reweighting"
@@ -498,7 +490,7 @@ class Graph:
         self.latents = nn.Sequential(*groups).to(kwargs["device"])
 
         if (
-            hyper_params["predict_x_var"]
+            hyper_params["predict_x_scale"]
             and hyper_params["separate_output_loc_scale_convs"]
         ):
             # Need a block to produce mean and log_var of p(x|z).
@@ -518,12 +510,9 @@ class Graph:
                 )
             ]
 
-            if "use_tanh_output" in hyper_params and hyper_params["use_tanh_output"]:
+            if hyper_params["output_activation_function"] == "tanh":
                 block += [TanhBlock(half_precision=hyper_params["half_precision"])]
-            elif (
-                "use_sigmoid_output" in hyper_params
-                and hyper_params["use_sigmoid_output"]
-            ):
+            elif hyper_params["output_activation_function"] == "sigmoid":
                 block += [SigmoidBlock(half_precision=hyper_params["half_precision"])]
 
             self.x_mu = nn.Sequential(*block).to(kwargs["device"])
@@ -545,7 +534,7 @@ class Graph:
 
             self.x_var = nn.Sequential(*block).to(kwargs["device"])
         else:
-            if hyper_params["predict_x_var"]:
+            if hyper_params["predict_x_scale"]:
                 channels_out = 2 * output_channels
             else:
                 channels_out = output_channels
@@ -578,11 +567,8 @@ class Graph:
                 experimental_activate_chans_0_1_only = False
 
             if experimental_activate_chans_0_1_only:
-                if (
-                    "use_tanh_output" in hyper_params
-                    and hyper_params["use_tanh_output"]
-                ):
-                    if hyper_params["predict_x_var"]:
+                if hyper_params["output_activation_function"] == "tanh":
+                    if hyper_params["predict_x_scale"]:
                         out_trans = TanhFirstNChansOnlyBlock(
                             half_precision=hyper_params["half_precision"],
                             channels_to_tanh=output_channels - 1,
@@ -593,11 +579,8 @@ class Graph:
                             channels_to_tanh=output_channels - 1,
                         )
 
-                elif (
-                    "use_sigmoid_output" in hyper_params
-                    and hyper_params["use_sigmoid_output"]
-                ):
-                    if hyper_params["predict_x_var"]:
+                elif hyper_params["output_activation_function"] == "sigmoid":
+                    if hyper_params["predict_x_scale"]:
                         out_trans = SigmoidFirstNChansOnlyBlock(
                             half_precision=hyper_params["half_precision"],
                             channels_to_sigmoid=output_channels - 1,
@@ -608,11 +591,8 @@ class Graph:
                             channels_to_sigmoid=output_channels - 1,
                         )
             else:
-                if (
-                    "use_tanh_output" in hyper_params
-                    and hyper_params["use_tanh_output"]
-                ):
-                    if hyper_params["predict_x_var"]:
+                if hyper_params["output_activation_function"] == "tanh":
+                    if hyper_params["predict_x_scale"]:
                         out_trans = TanhFirstNChansOnlyBlock(
                             half_precision=hyper_params["half_precision"],
                             channels_to_tanh=output_channels,
@@ -622,11 +602,8 @@ class Graph:
                             half_precision=hyper_params["half_precision"]
                         )
 
-                elif (
-                    "use_sigmoid_output" in hyper_params
-                    and hyper_params["use_sigmoid_output"]
-                ):
-                    if hyper_params["predict_x_var"]:
+                elif hyper_params["output_activation_function"] == "sigmoid":
+                    if hyper_params["predict_x_scale"]:
                         out_trans = SigmoidFirstNChansOnlyBlock(
                             half_precision=hyper_params["half_precision"],
                             channels_to_sigmoid=output_channels,

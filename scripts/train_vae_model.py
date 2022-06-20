@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict
 import torch
-from verydeepvae.orchestration import training_script_vae_new as training_script
+from verydeepvae.orchestration.training import train_model
 
 
 def parse_command_line_arguments() -> argparse.Namespace:
@@ -108,8 +108,8 @@ def post_process_hyperparameters(
     # For hyperparameters which require specifying a boolean flag per channel or latent
     # dimension we optionally allow using the string shorthands "all" or "none" to
     # indicate the value for all dimensions are True or False respectively
-    for key, size_as_function_of_latents_per_channel in [
-        ("latents_per_channel_weight_sharing", len),
+    for key, size_as_function_of_latent_feature_maps_per_resolution in [
+        ("latent_feature_maps_per_resolution_weight_sharing", len),
         ("latents_to_use", sum),
         ("latents_to_optimise", sum),
     ]:
@@ -117,14 +117,14 @@ def post_process_hyperparameters(
             "none",
             "all",
         }:
-            assert "latents_per_channel" in hyperparameters, (
-                "latents_per_channel must be specified in configuration file "
-                f"if {key} is either 'none' or 'all'"
+            assert "latent_feature_maps_per_resolution" in hyperparameters, (
+                "latent_feature_maps_per_resolution must be specified in configuration "
+                f"file if {key} is either 'none' or 'all'"
             )
             hyperparameters[key] = [
                 hyperparameters[key] == "all"
-            ] * size_as_function_of_latents_per_channel(
-                hyperparameters["latents_per_channel"]
+            ] * size_as_function_of_latent_feature_maps_per_resolution(
+                hyperparameters["latent_feature_maps_per_resolution"]
             )
 
 
@@ -147,7 +147,7 @@ def main():
             ) from e
     post_process_hyperparameters(hyperparameters, cli_args)
     torch.multiprocessing.set_start_method("spawn")
-    training_script.main(hyperparameters)
+    train_model(hyperparameters)
 
 
 if __name__ == "__main__":

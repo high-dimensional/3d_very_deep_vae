@@ -4,7 +4,7 @@ from ..graph_components.pooling_block import PoolingBlock
 from ..graph_components.unpooling_block import UnPoolingBlock
 
 
-class Graph:
+class BottomUpGraph:
     """
     This is the bottom up part of the very deep VAE graph.
     Each 'ResBlock' is just a 'bottleneck resblock' from the original resnet paper (but with a pair of convs with 3x3
@@ -32,10 +32,7 @@ class Graph:
             # New code for custom latent sizes
             self.pooling_ops = []
             for size in hyper_params["hidden_spatial_dims"]:
-                if hyper_params["use_nii_data"]:
-                    output_size = [size] * 3
-                else:
-                    output_size = [size] * 2
+                output_size = [size] * 3
 
                 self.pooling_ops.append(
                     UnPoolingBlock(

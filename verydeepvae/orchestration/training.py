@@ -1,4 +1,5 @@
 import glob
+import math
 import os
 import random
 import torch
@@ -12,29 +13,25 @@ from ..misc import misc
 from ..misc import environment
 from ..orchestration import one_epoch
 from monai.data import Dataset
-from ..graphs.vdeepvae_bottom_up_graph_translator import Graph as BottomUpGraph
-from ..graphs.vdeepvae_top_down_graph_translator import Graph as TopDownGraph
+from ..graphs.bottom_up import BottomUpGraph
+from ..graphs.top_down import TopDownGraph
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader
 import math as maths
 import nibabel as nib
 from ..data_tools.data_transformations import create_data_transformations
 import monai
+import matplotlib as mpl
 
 
-def main(hyper_params):
-    """
-    This script coordinates everything!
-
-    Reproducibility...
-    Take another look at this:
-    https://albertcthomas.github.io/good-practices-random-number-generators/
-
-    monai.utils.set_determinism(seed=True) results in each process applying the same
-    augmentation functions, which is wrong but not fatal...
-
-    Setting torch.manual_seed doesn't seem to make a difference
-    """
+def train_model(hyper_params):
+    """Train very deep variational autoencoder model with given hyper parameters."""
+    # Reproducibility...
+    # Take another look at this:
+    # https://albertcthomas.github.io/good-practices-random-number-generators/
+    # monai.utils.set_determinism(seed=True) results in each process applying the same
+    # augmentation functions, which is wrong but not fatal...
+    # Setting torch.manual_seed doesn't seem to make a difference
     random_seed = hyper_params.get("random_seed", 666)
     np.random.seed(random_seed)
     random.seed(random_seed)
@@ -44,6 +41,9 @@ def main(hyper_params):
     torch.backends.cudnn.benchmark = False
     torch.use_deterministic_algorithms(True)
 
+    # Use non-interactive AGG backend for producing Matplotlib plots
+    mpl.use("AGG")
+
     hyper_params = environment.setup_environment(hyper_params)
 
     if hyper_params["local_rank"] == 0:
@@ -51,281 +51,157 @@ def main(hyper_params):
     else:
         writer = None
 
-    if hyper_params["use_nii_data"]:
-        if "nii_target_shape" in hyper_params:
-            data_shape = hyper_params["nii_target_shape"]
+    if "resolution" in hyper_params:
+        log_2_resolution = math.log2(hyper_params["resolution"])
+        if log_2_resolution.is_integer():
+            data_shape = [hyper_params["resolution"]] * 3
         else:
-            misc.print_0(
-                hyper_params,
-                "You must specify the resample target shape using the data_shape key!",
-            )
+            raise ValueError("Value of resolution must be an integer power of 2")
+    else:
+        raise ValueError("Target shape must be specified using the resolution key")
+
+    if hyper_params["resume_from_checkpoint"]:
+        state_dict_fullpath = os.path.join(
+            hyper_params["checkpoint_folder"], "state_dictionary.pt"
+        )
+        misc.print_0(hyper_params, "Resuming from checkpoint: " + state_dict_fullpath)
+
+        if not os.path.exists(state_dict_fullpath):
+            misc.print_0(hyper_params, "Checkpoint not found: " + state_dict_fullpath)
             quit()
 
-        if hyper_params["resume_from_checkpoint"]:
-            state_dict_fullpath = os.path.join(
-                hyper_params["checkpoint_folder"], "state_dictionary.pt"
-            )
-            misc.print_0(
-                hyper_params, "Resuming from checkpoint: " + state_dict_fullpath
-            )
+        checkpoint = torch.load(state_dict_fullpath, map_location="cpu")
+        filenames_flair = checkpoint["filenames_flair"]
+        misc.print_0(hyper_params, "Number of niftis: " + str(len(filenames_flair)))
+        nifti_paths_flair = [
+            hyper_params["nifti_dir"] / name for name in filenames_flair
+        ]
+        nifti_b1000_filenames = filenames_flair
+        nifti_b1000_paths = nifti_paths_flair
+    else:
+        misc.print_0(
+            hyper_params,
+            f"nifti_dir found in hyper_params: {hyper_params['nifti_dir']}",
+        )
+        nifti_paths_flair = glob.glob(
+            str(hyper_params["nifti_dir"] / hyper_params["nifti_filename_pattern"])
+        )
+        filenames_flair = [os.path.basename(path) for path in nifti_paths_flair]
+        eids = [f.split("_")[0] for f in filenames_flair]
 
-            if not os.path.exists(state_dict_fullpath):
-                misc.print_0(
-                    hyper_params, "Checkpoint not found: " + state_dict_fullpath
-                )
-                quit()
-
-            checkpoint = torch.load(state_dict_fullpath, map_location="cpu")
-
-            if hyper_params["sequence_type"] == "dwi":
-                nifti_b1000_filenames = checkpoint["nifti_b1000_filenames"]
-                misc.print_0(
-                    hyper_params, "Number of niftis: " + str(len(nifti_b1000_filenames))
-                )
-                nifti_b1000_paths = [
-                    os.path.join(hyper_params["nifti_dwi_dir"], name)
-                    for name in nifti_b1000_filenames
-                ]
-            elif hyper_params["sequence_type"] == "flair":
-                filenames_flair = checkpoint["filenames_flair"]
-                misc.print_0(
-                    hyper_params, "Number of niftis: " + str(len(filenames_flair))
-                )
-                nifti_paths_flair = [
-                    hyper_params["nifti_dir"] / name for name in filenames_flair
-                ]
-                nifti_b1000_filenames = filenames_flair
-                nifti_b1000_paths = nifti_paths_flair
-        else:
-            misc.print_0(
-                hyper_params, "Sequence type: " + hyper_params["sequence_type"]
-            )
+        if misc.key_is_true(hyper_params, "load_metadata"):
             misc.print_0(
                 hyper_params,
-                f"nifti_dir found in hyper_params: {hyper_params['nifti_dir']}",
+                "Loading metadata and partitioning data into normal/abnormal",
             )
-            nifti_paths_flair = glob.glob(
-                str(hyper_params["nifti_dir"] / hyper_params["nifti_filename_pattern"])
+            filename = (
+                hyper_params["biobank_eids_dir"]
+                + "biobank_eids_with_white_matter_hyperintensities.csv"
             )
-            filenames_flair = [os.path.basename(path) for path in nifti_paths_flair]
-            eids = [f.split("_")[0] for f in filenames_flair]
+            eids_with_lesions = []
+            wml_volumes = []
+            with open(filename) as csvDataFile:
+                csvReader = csv.reader(csvDataFile)
+                for row in csvReader:
+                    eids_with_lesions.append(row[0])
+                    wml_volumes.append(row[1])
 
-            if misc.key_is_true(hyper_params, "load_metadata"):
-                misc.print_0(
-                    hyper_params,
-                    "Loading metadata and partitioning data into normal/abnormal",
-                )
-                filename = (
-                    hyper_params["biobank_eids_dir"]
-                    + "biobank_eids_with_white_matter_hyperintensities.csv"
-                )
-                eids_with_lesions = []
-                wml_volumes = []
-                with open(filename) as csvDataFile:
-                    csvReader = csv.reader(csvDataFile)
-                    for row in csvReader:
-                        eids_with_lesions.append(row[0])
-                        wml_volumes.append(row[1])
+            del eids_with_lesions[0]
+            del wml_volumes[0]
+            wml_volumes = [float(v) for v in wml_volumes]
 
-                del eids_with_lesions[0]
-                del wml_volumes[0]
-                wml_volumes = [float(v) for v in wml_volumes]
-
-                misc.print_0(
-                    hyper_params,
-                    f"Mean wml vol: {np.mean(wml_volumes)}; std: {np.std(wml_volumes)}",
-                )
-                wml_mean = np.mean(wml_volumes)
-
-                ind_normal = wml_volumes <= wml_mean
-                eids_normal = [a for a, b in zip(eids_with_lesions, ind_normal) if b]
-                eids_normal = [f for f in eids if f in eids_normal]
-
-                ind_abnormal = wml_volumes > wml_mean
-                eids_abnormal = [
-                    a for a, b in zip(eids_with_lesions, ind_abnormal) if b
-                ]
-                eids_abnormal = [f for f in eids if f in eids_abnormal]
-                misc.print_0(
-                    hyper_params,
-                    (
-                        f"Number of normals: {str(len(eids_normal))}; "
-                        f"number of abnormals: {str(len(eids_abnormal))}"
-                    ),
-                )
-
-                filenames_flair = [
-                    f for f in filenames_flair if f.split("_")[0] in eids_normal
-                ]
-                nifti_paths_flair = [
-                    hyper_params["nifti_dir"] / name for name in filenames_flair
-                ]
-
-            nifti_b1000_filenames = filenames_flair
-            nifti_b1000_paths = nifti_paths_flair
-
-            if "max_niis_to_use" in hyper_params:
-                misc.print_0(
-                    hyper_params,
-                    "Restricting to only "
-                    + str(hyper_params["max_niis_to_use"])
-                    + " niftis",
-                )
-                filenames_flair = filenames_flair[0 : hyper_params["max_niis_to_use"]]
-                # filenames_seg = filenames_seg[0:hyper_params['max_niis_to_use']]
-                nifti_b1000_filenames = nifti_b1000_filenames[
-                    0 : hyper_params["max_niis_to_use"]
-                ]
-                nifti_paths_flair = nifti_paths_flair[
-                    0 : hyper_params["max_niis_to_use"]
-                ]
-                # nifti_paths_seg = nifti_paths_seg[0:hyper_params['max_niis_to_use']]
-                nifti_b1000_paths = nifti_b1000_paths[
-                    0 : hyper_params["max_niis_to_use"]
-                ]
-
-                misc.print_0(
-                    hyper_params, "B_1000s: " + str(len(nifti_b1000_filenames))
-                )
-
-        training_set_size = np.floor(
-            len(nifti_b1000_paths) * hyper_params["train_frac"]
-        ).astype(np.int32)
-        validation_set_size = len(nifti_b1000_paths) - training_set_size
-        misc.print_0(hyper_params, "Training niftis: " + str(training_set_size))
-        misc.print_0(hyper_params, "Validation niftis: " + str(validation_set_size))
-
-        train_files = [
-            {"full_brain": x} for x in zip(nifti_paths_flair[0:training_set_size])
-        ]
-        val_files = [
-            {"full_brain": x} for x in zip(nifti_paths_flair[training_set_size::])
-        ]
-
-        val_transforms, train_transforms = create_data_transformations(
-            hyper_params, hyper_params["device"]
-        )
-
-        dataset_train = Dataset(data=train_files, transform=train_transforms)
-        dataset_val = Dataset(data=val_files, transform=val_transforms)
-
-        pin_memory = True
-        cardinality_train = len(dataset_train)
-        cardinality_val = len(dataset_val)
-        hyper_params["cardinality_train"] = cardinality_train
-        hyper_params["cardinality_val"] = cardinality_val
-
-        is_3d = True
-        is_colour = False
-
-        batch_count_train = np.ceil(
-            cardinality_train / hyper_params["batch_size"]
-        ).astype(np.int32)
-        batch_count_val = np.ceil(cardinality_val / hyper_params["batch_size"]).astype(
-            np.int32
-        )
-
-        misc.print_0(hyper_params, "Training set size: " + str(cardinality_train))
-        misc.print_0(hyper_params, "Validation set size: " + str(cardinality_val))
-        misc.print_0(
-            hyper_params, "Training batches per epoch: " + str(batch_count_train)
-        )
-        misc.print_0(
-            hyper_params, "Validation batches per epoch: " + str(batch_count_val)
-        )
-
-        hyper_params["data_shape"] = data_shape
-        hyper_params["data_is_3d"] = is_3d
-        hyper_params["data_is_colour"] = is_colour
-
-    else:
-        print("JPEG directory specified in hyperparameters")
-        print("JPEG base dir: " + hyper_params["jpeg_dir"])
-
-        from torchvision import transforms
-        from ..data_tools.jpeg_dataset import JPEGDataset
-
-        jpeg_dir = hyper_params["jpeg_dir"]
-        file_names = [
-            f for f in os.listdir(jpeg_dir) if os.path.isfile(os.path.join(jpeg_dir, f))
-        ]
-        csv_attr_path = None
-
-        if "max_jpegs_to_use" in hyper_params:
-            file_names = file_names[0 : hyper_params["max_jpegs_to_use"]]
-
-        train_frac = hyper_params["train_frac"]
-        print(
-            "Creating training/validation set split: proportion for training: "
-            + str(train_frac)
-        )
-        cardinality = len(file_names)
-        cardinality_train = int(train_frac * cardinality)
-
-        if hyper_params["resume_from_checkpoint"]:
-            # Overwrite the file listings using the lists in the checkpoint
-            state_dict_fullpath = os.path.join(
-                hyper_params["checkpoint_folder"], "state_dictionary.pt"
-            )
             misc.print_0(
-                hyper_params, "Resuming from checkpoint: " + state_dict_fullpath
+                hyper_params,
+                f"Mean wml vol: {np.mean(wml_volumes)}; std: {np.std(wml_volumes)}",
+            )
+            wml_mean = np.mean(wml_volumes)
+
+            ind_normal = wml_volumes <= wml_mean
+            eids_normal = [a for a, b in zip(eids_with_lesions, ind_normal) if b]
+            eids_normal = [f for f in eids if f in eids_normal]
+
+            ind_abnormal = wml_volumes > wml_mean
+            eids_abnormal = [a for a, b in zip(eids_with_lesions, ind_abnormal) if b]
+            eids_abnormal = [f for f in eids if f in eids_abnormal]
+            misc.print_0(
+                hyper_params,
+                (
+                    f"Number of normals: {str(len(eids_normal))}; "
+                    f"number of abnormals: {str(len(eids_abnormal))}"
+                ),
             )
 
-            if not os.path.exists(state_dict_fullpath):
-                misc.print_0(
-                    hyper_params, "Checkpoint not found: " + state_dict_fullpath
-                )
-                quit()
-
-            checkpoint = torch.load(state_dict_fullpath, map_location="cpu")
-            file_names_train = checkpoint["file_names_train"]
-            file_names_val = checkpoint["file_names_val"]
-
-            if "max_jpegs_to_use" in hyper_params:
-                # Just in case I change this value and then resume training...
-                file_names = file_names[0 : hyper_params["max_jpegs_to_use"]]
-
-        else:
-            file_names_train = file_names[0:cardinality_train]
-            file_names_val = file_names[cardinality_train:]
-
-        train_transforms = transforms.Compose(
-            [
-                # transforms.RandomAffine(3, translate=(0, 0.1), scale=(0.75, 1),
-                #                         shear=3, resample=Image.BILINEAR,
-                #                         fillcolor=0),
-                transforms.Resize(hyper_params["jpeg_target_shape"][0]),
-                transforms.CenterCrop(hyper_params["jpeg_target_shape"][0]),
-                # transforms.RandomVerticalFlip(p=0.5),
-                # transforms.ToTensor()
+            filenames_flair = [
+                f for f in filenames_flair if f.split("_")[0] in eids_normal
             ]
-        )
-
-        val_transforms = transforms.Compose(
-            [
-                transforms.Resize(hyper_params["jpeg_target_shape"][0]),
-                transforms.CenterCrop(hyper_params["jpeg_target_shape"][0]),
-                # transforms.ToTensor()
+            nifti_paths_flair = [
+                hyper_params["nifti_dir"] / name for name in filenames_flair
             ]
-        )
 
-        dataset_train = JPEGDataset(
-            jpeg_dir, file_names_train, csv_attr_path, train_transforms, hyper_params
-        )
-        dataset_val = JPEGDataset(
-            jpeg_dir, file_names_val, csv_attr_path, val_transforms, hyper_params
-        )
+        nifti_b1000_filenames = filenames_flair
+        nifti_b1000_paths = nifti_paths_flair
 
-        cardinality_train = len(dataset_train)
-        cardinality_val = len(dataset_val)
+        if "max_niis_to_use" in hyper_params:
+            misc.print_0(
+                hyper_params,
+                "Restricting to only "
+                + str(hyper_params["max_niis_to_use"])
+                + " niftis",
+            )
+            filenames_flair = filenames_flair[0 : hyper_params["max_niis_to_use"]]
+            # filenames_seg = filenames_seg[0:hyper_params['max_niis_to_use']]
+            nifti_b1000_filenames = nifti_b1000_filenames[
+                0 : hyper_params["max_niis_to_use"]
+            ]
+            nifti_paths_flair = nifti_paths_flair[0 : hyper_params["max_niis_to_use"]]
+            # nifti_paths_seg = nifti_paths_seg[0:hyper_params['max_niis_to_use']]
+            nifti_b1000_paths = nifti_b1000_paths[0 : hyper_params["max_niis_to_use"]]
 
-        is_3d = False
-        data_shape = [1] + hyper_params["jpeg_target_shape"] * 2
-        is_colour = False
+            misc.print_0(hyper_params, "B_1000s: " + str(len(nifti_b1000_filenames)))
 
-        hyper_params["data_shape"] = data_shape
-        hyper_params["data_is_3d"] = is_3d
-        hyper_params["data_is_colour"] = is_colour
+    training_set_size = np.floor(
+        len(nifti_b1000_paths) * hyper_params["train_frac"]
+    ).astype(np.int32)
+    validation_set_size = len(nifti_b1000_paths) - training_set_size
+    misc.print_0(hyper_params, "Training niftis: " + str(training_set_size))
+    misc.print_0(hyper_params, "Validation niftis: " + str(validation_set_size))
+
+    train_files = [
+        {"full_brain": x} for x in zip(nifti_paths_flair[0:training_set_size])
+    ]
+    val_files = [{"full_brain": x} for x in zip(nifti_paths_flair[training_set_size::])]
+
+    val_transforms, train_transforms = create_data_transformations(
+        hyper_params, hyper_params["device"]
+    )
+
+    dataset_train = Dataset(data=train_files, transform=train_transforms)
+    dataset_val = Dataset(data=val_files, transform=val_transforms)
+
+    pin_memory = True
+    cardinality_train = len(dataset_train)
+    cardinality_val = len(dataset_val)
+    hyper_params["cardinality_train"] = cardinality_train
+    hyper_params["cardinality_val"] = cardinality_val
+
+    is_3d = True
+    is_colour = False
+
+    batch_count_train = np.ceil(cardinality_train / hyper_params["batch_size"]).astype(
+        np.int32
+    )
+    batch_count_val = np.ceil(cardinality_val / hyper_params["batch_size"]).astype(
+        np.int32
+    )
+
+    misc.print_0(hyper_params, "Training set size: " + str(cardinality_train))
+    misc.print_0(hyper_params, "Validation set size: " + str(cardinality_val))
+    misc.print_0(hyper_params, "Training batches per epoch: " + str(batch_count_train))
+    misc.print_0(hyper_params, "Validation batches per epoch: " + str(batch_count_val))
+
+    hyper_params["data_shape"] = data_shape
+    hyper_params["data_is_3d"] = is_3d
+    hyper_params["data_is_colour"] = is_colour
 
     if (
         "visualise_training_pipeline_before_starting" in hyper_params
@@ -445,9 +321,8 @@ def main(hyper_params):
         top_down_graph.x_mu
     )
     if (
-        hyper_params["likelihood"] == "Gaussian"
-        and hyper_params["separate_output_loc_scale_convs"]
-        and hyper_params["predict_x_var"]
+        hyper_params["separate_output_loc_scale_convs"]
+        and hyper_params["predict_x_scale"]
     ):
         top_down_graph.x_var = torch.nn.SyncBatchNorm.convert_sync_batchnorm(
             top_down_graph.x_var
@@ -469,9 +344,8 @@ def main(hyper_params):
         output_device=hyper_params["device"],
     )
     if (
-        hyper_params["likelihood"] == "Gaussian"
-        and hyper_params["separate_output_loc_scale_convs"]
-        and hyper_params["predict_x_var"]
+        hyper_params["separate_output_loc_scale_convs"]
+        and hyper_params["predict_x_scale"]
     ):
         top_down_graph.x_var = torch.nn.parallel.DistributedDataParallel(
             top_down_graph.x_var,
@@ -491,9 +365,8 @@ def main(hyper_params):
         params += list(top_down_graph.x_mu.parameters())
 
     if (
-        hyper_params["likelihood"] == "Gaussian"
-        and hyper_params["separate_output_loc_scale_convs"]
-        and hyper_params["predict_x_var"]
+        hyper_params["separate_output_loc_scale_convs"]
+        and hyper_params["predict_x_scale"]
     ):
         if not ("optimise_xvar" in hyper_params and not hyper_params["optimise_xvar"]):
             params += list(top_down_graph.x_var.parameters())
@@ -561,9 +434,8 @@ def main(hyper_params):
         ),
     )
     if (
-        hyper_params["likelihood"] == "Gaussian"
-        and hyper_params["separate_output_loc_scale_convs"]
-        and hyper_params["predict_x_var"]
+        hyper_params["separate_output_loc_scale_convs"]
+        and hyper_params["predict_x_scale"]
     ):
         misc.print_0(
             hyper_params,
@@ -603,9 +475,8 @@ def main(hyper_params):
             checkpoint["top_down_x_mu_graph_state_dict"]
         )
         if (
-            hyper_params["likelihood"] == "Gaussian"
-            and hyper_params["separate_output_loc_scale_convs"]
-            and hyper_params["predict_x_var"]
+            hyper_params["separate_output_loc_scale_convs"]
+            and hyper_params["predict_x_scale"]
         ):
             top_down_graph.x_var.load_state_dict(
                 checkpoint["top_down_x_var_graph_state_dict"]
@@ -899,7 +770,9 @@ def main(hyper_params):
                     ]
                     dims_per_latent = []
                     for k, dims in enumerate(dimensionalities):
-                        num_latents = hyper_params["latents_per_channel"][-1 - k]
+                        num_latents = hyper_params[
+                            "latent_feature_maps_per_resolution"
+                        ][-1 - k]
                         dims_per_latent += [
                             dims
                         ] * num_latents  # Times to repeat this dims
@@ -982,21 +855,11 @@ def main(hyper_params):
                 if "kl_multiplier" in hyper_params:
                     checkpoint_dict["kl_multiplier"] = hyper_params["kl_multiplier"]
 
-                if hyper_params["use_nii_data"]:
-                    if hyper_params["sequence_type"] == "dwi":
-                        checkpoint_dict["nifti_b1000_filenames"] = nifti_b1000_filenames
-                    elif hyper_params["sequence_type"] == "flair":
-                        checkpoint_dict["filenames_flair"] = filenames_flair
-                        # checkpoint_dict['filenames_seg'] = filenames_seg
-                else:
-                    checkpoint_dict["file_names_train"] = file_names_train
-                    checkpoint_dict["file_names_val"] = file_names_val
-                    checkpoint_dict["file_names"] = file_names
+                checkpoint_dict["filenames_flair"] = filenames_flair
 
                 if (
-                    hyper_params["likelihood"] == "Gaussian"
-                    and hyper_params["separate_output_loc_scale_convs"]
-                    and hyper_params["predict_x_var"]
+                    hyper_params["separate_output_loc_scale_convs"]
+                    and hyper_params["predict_x_scale"]
                 ):
                     checkpoint_dict[
                         "top_down_x_var_graph_state_dict"
@@ -1027,9 +890,8 @@ def main(hyper_params):
                 top_down_graph.latents.eval()
                 top_down_graph.x_mu.eval()
                 if (
-                    hyper_params["likelihood"] == "Gaussian"
-                    and hyper_params["separate_output_loc_scale_convs"]
-                    and hyper_params["predict_x_var"]
+                    hyper_params["separate_output_loc_scale_convs"]
+                    and hyper_params["predict_x_scale"]
                 ):
                     top_down_graph.x_var.eval()
 
@@ -1038,11 +900,7 @@ def main(hyper_params):
                 with amp.autocast(hyper_params["half_precision"]):
                     batch = next(iter(loader_val))
 
-                    if hyper_params["use_nii_data"]:
-                        # In this case use dictionaries
-                        current_input = batch["full_brain"].to(hyper_params["device"])
-                    else:
-                        current_input = batch[0].to(hyper_params["device"])
+                    current_input = batch["full_brain"].to(hyper_params["device"])
 
                     if hyper_params["half_precision"]:
                         current_input = current_input.type(torch.float32)
@@ -1052,10 +910,7 @@ def main(hyper_params):
                     to_plot = [current_input]
                     titles = ["input: current_input"]
 
-                    if (
-                        hyper_params["likelihood"] == "Gaussian"
-                        and hyper_params["predict_x_var"]
-                    ):
+                    if hyper_params["predict_x_scale"]:
                         to_plot_std = [current_input]
                         titles_std = ["input: current_input"]
 
@@ -1065,28 +920,15 @@ def main(hyper_params):
                         max = len(hyper_params["channels_per_latent"])
 
                         if "hidden_spatial_dims" in hyper_params:
-                            if hyper_params["use_nii_data"]:
-                                temp = (
-                                    hyper_params["nii_target_shape"][0:1]
-                                    + hyper_params["hidden_spatial_dims"][:]
-                                )
-                            else:
-                                temp = (
-                                    hyper_params["jpeg_target_shape"]
-                                    + hyper_params["hidden_spatial_dims"][:]
-                                )
-
+                            temp = [hyper_params["resolution"]] + hyper_params[
+                                "hidden_spatial_dims"
+                            ][:]
                             res_to_sample_from_prior = temp[::-1][min:]
                         else:
                             res_to_sample_from_prior = [2**p for p in range(min, max)]
 
-                        if hyper_params["use_nii_data"]:
-                            # In this case use dictionaries
-                            current_input = batch["full_brain"].to(
-                                hyper_params["device"]
-                            )
-                        else:
-                            current_input = batch[0].to(hyper_params["device"])
+                        # In this case use dictionaries
+                        current_input = batch["full_brain"].to(hyper_params["device"])
 
                         input_dictionary_1 = {"data": current_input}
 
@@ -1107,62 +949,37 @@ def main(hyper_params):
                             data_dictionary_latents
                         )
 
-                        if hyper_params["likelihood"] == "Gaussian":
-                            x_mu, x_std, x_var, x_log_var = misc.gaussian_output(
-                                data_dictionary_x_mu,
-                                data_dictionary_latents,
-                                top_down_graph,
-                                hyper_params,
-                                num_modalities=1,
-                            )
-                        else:
-                            logits = data_dictionary_x_mu["data"]
-                            probs = logits.detach().cpu()
-                            probs = torch.sigmoid(probs)
-                            preds = probs.detach().clone()
-                            preds[preds >= 0.5] = 1
-                            preds[preds < 0.5] = 0
-
-                            x_mu = preds
+                        x_mu, x_std, x_var, x_log_var = misc.gaussian_output(
+                            data_dictionary_x_mu,
+                            data_dictionary_latents,
+                            top_down_graph,
+                            hyper_params,
+                            num_modalities=1,
+                        )
 
                         if hyper_params["half_precision"]:
                             x_mu = x_mu.type(torch.float32)
-                            if (
-                                hyper_params["likelihood"] == "Gaussian"
-                                and hyper_params["predict_x_var"]
-                            ):
+                            if hyper_params["predict_x_scale"]:
                                 x_std = x_std.type(torch.float32)
 
                         x_mu = x_mu.cpu().detach().numpy()
-                        if (
-                            hyper_params["likelihood"] == "Gaussian"
-                            and hyper_params["predict_x_var"]
-                        ):
+                        if hyper_params["predict_x_scale"]:
                             x_std = x_std.cpu().detach().numpy()
 
                         to_plot += [x_mu]
-                        if (
-                            hyper_params["likelihood"] == "Gaussian"
-                            and hyper_params["predict_x_var"]
-                        ):
+                        if hyper_params["predict_x_scale"]:
                             to_plot_std += [x_std]
 
                         if min == max:
                             if is_3d:
                                 titles += ["E[p(current_input | z)]. No imputation!"]
-                                if (
-                                    hyper_params["likelihood"] == "Gaussian"
-                                    and hyper_params["predict_x_var"]
-                                ):
+                                if hyper_params["predict_x_scale"]:
                                     titles_std += [
                                         "STD[p(current_input | z)]. No imputation!"
                                     ]
                             else:
                                 titles += ["E[p(current_input | z)].\nNo imputation!"]
-                                if (
-                                    hyper_params["likelihood"] == "Gaussian"
-                                    and hyper_params["predict_x_var"]
-                                ):
+                                if hyper_params["predict_x_scale"]:
                                     titles_std += [
                                         "STD[p(current_input | z)].\nNo imputation!"
                                     ]
@@ -1180,10 +997,7 @@ def main(hyper_params):
                                     + res
                                     + " cubed using the prior"
                                 ]
-                                if (
-                                    hyper_params["likelihood"] == "Gaussian"
-                                    and hyper_params["predict_x_var"]
-                                ):
+                                if hyper_params["predict_x_scale"]:
                                     titles_std += [
                                         "STD[p(current_input | z)]. "
                                         + "Imputing latents above "
@@ -1196,10 +1010,7 @@ def main(hyper_params):
                                     + res
                                     + "\nsquared using the prior"
                                 ]
-                                if (
-                                    hyper_params["likelihood"] == "Gaussian"
-                                    and hyper_params["predict_x_var"]
-                                ):
+                                if hyper_params["predict_x_scale"]:
                                     titles_std += [
                                         "STD[p(current_input | z)].\n"
                                         + "Imputing latents above "
@@ -1211,10 +1022,7 @@ def main(hyper_params):
                         hyper_params["subjects_to_plot"]
                     )
                     prefix = "prog_recons_rank" + str(hyper_params["local_rank"])
-                    if (
-                        hyper_params["likelihood"] == "Gaussian"
-                        and hyper_params["predict_x_var"]
-                    ):
+                    if hyper_params["predict_x_scale"]:
                         prefix_std = "prog_stds_rank" + str(hyper_params["local_rank"])
                     if is_3d:
                         visuals.plot_3d_recons_v2(
@@ -1226,10 +1034,7 @@ def main(hyper_params):
                             hyper_params=hyper_params,
                             prefix=prefix,
                         )
-                        if (
-                            hyper_params["likelihood"] == "Gaussian"
-                            and hyper_params["predict_x_var"]
-                        ):
+                        if hyper_params["predict_x_scale"]:
                             visuals.plot_3d_recons_v2(
                                 to_plot_std,
                                 titles_std,
@@ -1250,10 +1055,7 @@ def main(hyper_params):
                             num_to_plot=subjects_to_plot_per_process,
                             norm_recons=True,
                         )
-                        if (
-                            hyper_params["likelihood"] == "Gaussian"
-                            and hyper_params["predict_x_var"]
-                        ):
+                        if hyper_params["predict_x_scale"]:
                             visuals.plot_2d(
                                 to_plot_std,
                                 titles_std,
@@ -1330,35 +1132,22 @@ def main(hyper_params):
                                 data_dictionary_latents
                             )
 
-                            if hyper_params["likelihood"] == "Gaussian":
-                                (
-                                    samples,
-                                    samples_std,
-                                    samples_var,
-                                    samples_log_var,
-                                ) = misc.gaussian_output(
-                                    data_dictionary_x_mu,
-                                    data_dictionary_latents,
-                                    top_down_graph,
-                                    hyper_params,
-                                    num_modalities=1,
-                                )
-                            else:
-                                logits = data_dictionary_x_mu["data"]
-                                probs = logits.detach().cpu()
-                                probs = torch.sigmoid(probs)
-                                preds = probs.detach().clone()
-                                preds[preds >= 0.5] = 1
-                                preds[preds < 0.5] = 0
-
-                                samples = preds
+                            (
+                                samples,
+                                samples_std,
+                                samples_var,
+                                samples_log_var,
+                            ) = misc.gaussian_output(
+                                data_dictionary_x_mu,
+                                data_dictionary_latents,
+                                top_down_graph,
+                                hyper_params,
+                                num_modalities=1,
+                            )
 
                             samples = samples.type(torch.float32)
                             samples = samples.cpu().detach().numpy()
-                            if (
-                                hyper_params["likelihood"] == "Gaussian"
-                                and hyper_params["predict_x_var"]
-                            ):
+                            if hyper_params["predict_x_scale"]:
                                 samples_std = samples_std.type(torch.float32)
                                 samples_std = samples_std.cpu().detach().numpy()
 
@@ -1391,10 +1180,7 @@ def main(hyper_params):
 
                                 to_plot = [samples]
                                 titles = ["sample from p(current_input | z)"]
-                                if (
-                                    hyper_params["likelihood"] == "Gaussian"
-                                    and hyper_params["predict_x_var"]
-                                ):
+                                if hyper_params["predict_x_scale"]:
                                     to_plot += [samples_std]
                                     titles += ["std of p(current_input | z)"]
 
@@ -1442,10 +1228,7 @@ def main(hyper_params):
                                     5,
                                     norm_recons=True,
                                 )
-                                if (
-                                    hyper_params["likelihood"] == "Gaussian"
-                                    and hyper_params["predict_x_var"]
-                                ):
+                                if hyper_params["predict_x_scale"]:
                                     visuals.image_grid(
                                         samples_std,
                                         epoch,

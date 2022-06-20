@@ -126,19 +126,19 @@ The hyperparameters specifying the model and training run configuration are spec
   The number of images per minibatch for the stochastic gradient descent training algorithm. For the `128×128×128` configuration the model a batch size of 1 is needed to keep the peak GPU memory use below 32GiB. Higher batch sizes are possible at lower resolutions or on GPUs with more device memory.
 - `max_niis_to_use`:
   The maximum number of NiFTI files to use in a training epoch. Use this to define a shorter epoch, for example to quickly test visualisations are being saved correctly.
-- `nii_target_shape`:
-  Specifies the target resolution to generate images at as a list of three positive integers corresponding to integer powers of 2, for example `[128, 128, 128]` for a `128×128×128` resolution.
+- `resolution`:
+  Specifies the target resolution to generate images at along each of the three image dimensions, for example `128` for a `128×128×128` resolution. Must be an integer power of 2.
 - `visualise_training_pipeline_before_starting`:
   Set this to `true` to see a folder (`pipeline_test`, in the output folder) of augmented examples.
 
 ### Layer definitions
 
-The model architecture is specified by a series of hyperparameters `latents_per_channel`, `channels_per_latent`, `channels`, `kernel_sizes_bottom_up` and `kernel_sizes_top_down`, each of which is list of `k + 1` integers where `k` is the base-2 logarithm of the resolution along each dimension - for example for the `128×128×128` configuration `k = 7`. The corresponding entries in all lists define a convolution block and after each of these we downsample by a factor of two in each spatial dimension on the way up and upsample by a factor of two in each spatial dimension on the way back down. This version of the code has not been tested when these lists have fewer than `k + 1` elements - you have been warned!
+The model architecture is specified by a series of hyperparameters `latent_feature_maps_per_resolution`, `channels_per_latent`, `channels`, `kernel_sizes_bottom_up` and `kernel_sizes_top_down`, each of which is list of `k + 1` integers where `k` is the base-2 logarithm of the resolution along each dimension - for example for the `128×128×128` configuration `k = 7`. The corresponding entries in all lists define a convolution block and after each of these we downsample by a factor of two in each spatial dimension on the way up and upsample by a factor of two in each spatial dimension on the way back down. This version of the code has not been tested when these lists have fewer than `k + 1` elements - you have been warned!
 
 As an example the definition for the example `128×128×128` configuration is
 
 ```JSON
-  "latents_per_channel":  [2, 7, 6, 5, 4, 3, 2, 1],
+  "latent_feature_maps_per_resolution":  [2, 7, 6, 5, 4, 3, 2, 1],
   "channels_per_latent": [20, 20, 20, 20, 20, 20, 20, 200],
   "channels": [20, 40, 60, 80, 100, 120, 140, 160],
   "kernel_sizes_bottom_up": [3, 3, 3, 3, 3, 3, 2, 1],

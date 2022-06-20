@@ -40,9 +40,9 @@ class ConvBlock(nn.Module):
         if "depth_override" in self.hyper_params:
             self.depth = self.hyper_params["depth_override"]
         else:
-            self.depth = np.sum(self.hyper_params["latents_per_channel"]) + 2 * (
-                len(self.hyper_params["channels"]) - 1
-            )
+            self.depth = np.sum(
+                self.hyper_params["latent_feature_maps_per_resolution"]
+            ) + 2 * (len(self.hyper_params["channels"]) - 1)
 
         if "veto_bottleneck" in self.kwargs and self.kwargs["veto_bottleneck"]:
             self.veto_bottleneck = True

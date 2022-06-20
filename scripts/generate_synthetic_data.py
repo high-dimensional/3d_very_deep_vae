@@ -91,7 +91,7 @@ def main():
     if args.number_of_files <= 0:
         raise ValueError("number_of_files must be a positive integer")
     if args.voxels_per_axis <= 0 or (np.log2(args.voxels_per_axis) % 1) != 0.0:
-        raise ValueError("voxels_per_image must be a positive power of two")
+        raise ValueError("voxels_per_axis must be a positive power of two")
     rng = np.random.default_rng(args.random_seed)
     for file_index in tqdm.trange(args.number_of_files):
         voxels = generate_synthetic_voxels(rng, args)

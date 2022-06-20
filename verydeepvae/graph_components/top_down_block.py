@@ -38,7 +38,7 @@ class TopDownBlock(nn.Module):
         if "minimum_upper_hidden_bound" in self.hyper_params:
             self.index_of_latent = self.kwargs["index_of_latent"]
             self.biggest_latent_index = (
-                np.sum(self.hyper_params["latents_per_channel"]) - 1
+                np.sum(self.hyper_params["latent_feature_maps_per_resolution"]) - 1
             )
             self.minimum_upper_variance_bound = self.hyper_params[
                 "minimum_upper_hidden_bound"
@@ -84,7 +84,7 @@ class TopDownBlock(nn.Module):
         if "depth_override" in self.hyper_params:
             self.depth = self.hyper_params["depth_override"]
         else:
-            self.depth = np.sum(self.hyper_params["latents_per_channel"])
+            self.depth = np.sum(self.hyper_params["latent_feature_maps_per_resolution"])
             self.depth += 2 * (len(self.hyper_params["channels"]) - 1)
 
         if misc.key_is_true(self.kwargs, "conditional_prior"):
@@ -1186,7 +1186,7 @@ class TopDownBlock(nn.Module):
                         p_skip = self.convs_p_skip_conv_after_prior(p_intermediate)
 
                     if misc.key_is_true(
-                        self.hyper_params, "predict_x_var_with_sigmoid"
+                        self.hyper_params, "predict_x_scale_with_sigmoid"
                     ):
                         lower = self.variance_bounds[0]
                         upper = self.variance_bounds[1]
@@ -1303,7 +1303,7 @@ class TopDownBlock(nn.Module):
                             )
 
                             if misc.key_is_true(
-                                self.hyper_params, "predict_x_var_with_sigmoid"
+                                self.hyper_params, "predict_x_scale_with_sigmoid"
                             ):
                                 p_std = torch.ones(
                                     shape, device=device, dtype=torch.float32
@@ -1394,7 +1394,7 @@ class TopDownBlock(nn.Module):
                                 )
 
                             if misc.key_is_true(
-                                self.hyper_params, "predict_x_var_with_sigmoid"
+                                self.hyper_params, "predict_x_scale_with_sigmoid"
                             ):
                                 lower = self.variance_bounds[0]
                                 upper = self.variance_bounds[1]
@@ -1496,7 +1496,7 @@ class TopDownBlock(nn.Module):
                         p_skip = self.convs_p_skip_conv_after_prior(p_intermediate)
 
                     if misc.key_is_true(
-                        self.hyper_params, "predict_x_var_with_sigmoid"
+                        self.hyper_params, "predict_x_scale_with_sigmoid"
                     ):
                         lower = self.variance_bounds[0]
                         upper = self.variance_bounds[1]
@@ -1573,7 +1573,7 @@ class TopDownBlock(nn.Module):
                     q_mu = self.convs_q[3](q_intermediate)
                     q_log_var = self.convs_q[4](q_intermediate)
 
-                if misc.key_is_true(self.hyper_params, "predict_x_var_with_sigmoid"):
+                if misc.key_is_true(self.hyper_params, "predict_x_scale_with_sigmoid"):
                     lower = self.variance_bounds[0]
                     upper = self.variance_bounds[1]
                     q_std = lower + (upper - lower) * torch.sigmoid(q_log_var)
@@ -1625,7 +1625,7 @@ class TopDownBlock(nn.Module):
                         noise *= self.hyper_params["noise_injection_multiplier"]
 
                     if misc.key_is_true(
-                        self.hyper_params, "predict_x_var_with_sigmoid"
+                        self.hyper_params, "predict_x_scale_with_sigmoid"
                     ):
                         data = q_mu + torch.mul(q_std, noise)
                     else:
@@ -1677,7 +1677,7 @@ class TopDownBlock(nn.Module):
                         kl_mask = None
 
                     if misc.key_is_true(
-                        self.hyper_params, "predict_x_var_with_sigmoid"
+                        self.hyper_params, "predict_x_scale_with_sigmoid"
                     ):
                         if self.uppermost_block and not self.conditional_model:
                             data_dictionary["KL_list"].append(
