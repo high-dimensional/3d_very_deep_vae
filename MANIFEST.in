@@ -3,6 +3,7 @@ include tox.ini
 include CITATION.cff
 exclude .git-blame-ignore-revs
 include model_configuration.schema.json
+include model_configuration_schema.md
 recursive-exclude .idea *
 recursive-include example_configurations *.json
 recursive-include scripts *.py
