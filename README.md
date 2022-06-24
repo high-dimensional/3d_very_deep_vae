@@ -142,15 +142,14 @@ The model architecture is specified by a series of properties `channels`, `chann
 As an example the definition for the example `128×128×128` configuration is
 
 ```JSON
-    "channels": [20, 40, 60, 80, 100, 120, 140, 160],
-    "channels_top_down": [20, 40, 60, 80, 100, 120, 140, 160],
-    "channels_hidden": [20, 40, 60, 80, 100, 120, 140, 160],
-    "channels_hidden_top_down": [20, 40, 60, 80, 100, 120, 140, 160],
-    "channels_per_latent": [20, 20, 20, 20, 20, 20, 20, 200],
-    "latent_feature_maps_per_resolution": [2, 7, 6, 5, 4, 3, 2, 1],
-    "kernel_sizes_bottom_up": [3, 3, 3, 3, 3, 3, 2, 1],
-    "kernel_sizes_top_down": [3, 3, 3, 3, 3, 3, 2, 1]
-}
+"channels": [20, 40, 60, 80, 100, 120, 140, 160],
+"channels_top_down": [20, 40, 60, 80, 100, 120, 140, 160],
+"channels_hidden": [20, 40, 60, 80, 100, 120, 140, 160],
+"channels_hidden_top_down": [20, 40, 60, 80, 100, 120, 140, 160],
+"channels_per_latent": [20, 20, 20, 20, 20, 20, 20, 200],
+"latent_feature_maps_per_resolution": [2, 7, 6, 5, 4, 3, 2, 1],
+"kernel_sizes_bottom_up": [3, 3, 3, 3, 3, 3, 2, 1],
+"kernel_sizes_top_down": [3, 3, 3, 3, 3, 3, 2, 1]
 ```
 
 where for example the first line specifies that, reading left to right, we have 20 output channels in the residual network block at the `128×128×128` resolution, 40 output channels in the residual network block at `64×64×64` resolution, 60 output channels in the residual network block at `32×32×32` resolution, 80  output channels in the residual network block at `16×16×16` resolution and so on.
