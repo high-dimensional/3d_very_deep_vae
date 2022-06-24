@@ -127,8 +127,8 @@ def post_process_hyperparameters(
             ] * size_as_function_of_latent_feature_maps_per_resolution(
                 hyperparameters["latent_feature_maps_per_resolution"]
             )
-            
-            
+
+
 def load_config_schema():
     schema_path = Path(__file__).parent.parent / "model_configuration.schema.json"
     with open(schema_path, "r") as f:
@@ -139,6 +139,56 @@ def load_config_schema():
                 f"Configuration schema file {schema_path} not valid JSON"
             ) from e
     return schema
+
+
+def extend_validator_with_default(validator_class):
+    """Extend jsonschema validator class to set optional property values to defaults.
+
+    Renaming of function provided in FAQ of jsonschema documentation at
+    https://github.com/python-jsonschema/jsonschema/blob/
+    642a09f08318605b16563f47073d3e7b73025029/docs/faq.rst
+
+    License for original code:
+
+    Copyright (c) 2013 Julian Berman
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.
+    """
+    validate_properties = validator_class.VALIDATORS["properties"]
+
+    def set_defaults(validator, properties, instance, schema):
+        for property, subschema in properties.items():
+            if "default" in subschema:
+                instance.setdefault(property, subschema["default"])
+
+        for error in validate_properties(
+            validator,
+            properties,
+            instance,
+            schema,
+        ):
+            yield error
+
+    return jsonschema.validators.extend(
+        validator_class,
+        {"properties": set_defaults},
+    )
 
 
 def main():
@@ -159,7 +209,8 @@ def main():
                 f"Configuration file {cli_args.json_config_file} not valid JSON"
             ) from e
     schema = load_config_schema()
-    jsonschema.validate(hyperparameters, schema)
+    validator = extend_validator_with_default(jsonschema.Draft202012Validator)(schema)
+    validator.validate(hyperparameters, schema)
     post_process_hyperparameters(hyperparameters, cli_args)
     torch.multiprocessing.set_start_method("spawn")
     train_model(hyperparameters)
