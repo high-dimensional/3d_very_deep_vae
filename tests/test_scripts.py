@@ -100,6 +100,41 @@ def configuration_dict():
     }
 
 
+@pytest.fixture(scope="module")
+def synthetic_data_dir(tmp_path_factory):
+    voxels_per_axis = 32
+    number_of_files = 2
+    data_dir = tmp_path_factory.mktemp("data")
+    generate_data_args = [
+        "--voxels_per_axis",
+        str(voxels_per_axis),
+        "--number_of_files",
+        str(number_of_files),
+        "--output_directory",
+        str(data_dir),
+        "--random_seed",
+        str(SEED),
+    ]
+    run_script("generate_synthetic_data.py", generate_data_args, check_return_code=True)
+    return data_dir
+
+
+def train_vae_model_with_configuration(configuration_dict, data_dir, tmp_path_factory):
+    configuration_path = tmp_path_factory.mktemp("configurations") / "test_config.json"
+    with open(configuration_path, "w") as f:
+        json.dump(configuration_dict, f)
+    outputs_dir = tmp_path_factory.mktemp("outputs")
+    train_model_args = [
+        "--json_config_file",
+        str(configuration_path),
+        "--nifti_dir",
+        str(data_dir),
+        "--output_dir",
+        str(outputs_dir),
+    ]
+    run_script("train_vae_model.py", train_model_args, check_return_code=True)
+
+
 @pytest.mark.parametrize(
     "configuration_updates",
     [
@@ -126,33 +161,31 @@ def configuration_dict():
     ids=lambda d: ",".join(f"{k}={v}" for k, v in d.items()) if d else "base",
 )
 def test_generate_synthetic_data_and_train_vae_model(
-    tmp_path_factory, configuration_dict, configuration_updates
+    tmp_path_factory, synthetic_data_dir, configuration_dict, configuration_updates
 ):
-    voxels_per_axis = 32
-    number_of_files = 2
-    data_dir = tmp_path_factory.mktemp("data")
-    generate_data_args = [
-        "--voxels_per_axis",
-        str(voxels_per_axis),
-        "--number_of_files",
-        str(number_of_files),
-        "--output_directory",
-        str(data_dir),
-        "--random_seed",
-        str(SEED),
-    ]
-    run_script("generate_synthetic_data.py", generate_data_args, check_return_code=True)
     configuration_dict.update(configuration_updates)
-    configuration_path = tmp_path_factory.mktemp("configurations") / "test_config.json"
-    with open(configuration_path, "w") as f:
-        json.dump(configuration_dict, f)
-    outputs_dir = tmp_path_factory.mktemp("outputs")
-    train_model_args = [
-        "--json_config_file",
-        str(configuration_path),
-        "--nifti_dir",
-        str(data_dir),
-        "--output_dir",
-        str(outputs_dir),
-    ]
-    run_script("train_vae_model.py", train_model_args, check_return_code=True)
+    train_vae_model_with_configuration(
+        configuration_dict, synthetic_data_dir, tmp_path_factory
+    )
+
+
+@pytest.mark.parametrize(
+    "invalid_configuration_updates",
+    [
+        {"total_epochs": -1},
+        {"batch_size": "100.2"},
+        {"foo": True},
+    ],
+    ids=lambda d: ",".join(f"{k}={v}" for k, v in d.items()) if d else "base",
+)
+def test_generate_synthetic_data_and_train_vae_model_with_invalid_config_file_raises(
+    tmp_path_factory,
+    synthetic_data_dir,
+    configuration_dict,
+    invalid_configuration_updates,
+):
+    configuration_dict.update(invalid_configuration_updates)
+    with pytest.raises(AssertionError, match="jsonschema.exceptions.ValidationError"):
+        train_vae_model_with_configuration(
+            configuration_dict, synthetic_data_dir, tmp_path_factory
+        )
