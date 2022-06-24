@@ -2,7 +2,7 @@
 
 [![Continuous integration](https://github.com/high-dimensional/3d_very_deep_vae/actions/workflows/ci.yml/badge.svg)](https://github.com/high-dimensional/3d_very_deep_vae/actions/workflows/ci.yml)
 
-[PyTorch](https://pytorch.org/) implementation of (a streamlined version of) Rewon Child's ['very deep' variational autoencoder (Child, R. Very Deep VAEs Generalize Autoregressive Models and Can Outperform Them on Images. In Proceedings of the 9th International Conference on Learning Representations (ICLR), 2021.)](https://arxiv.org/pdf/2011.10650.pdf) for generating synthetic three-dimensional images based on neuroimaging training data. The Wikipedia page for [variational autoencoders](https://en.wikipedia.org/wiki/Variational_autoencoder) contains some background material.
+[PyTorch](https://pytorch.org/) implementation of (a streamlined version of) Rewon Child's 'very deep' variational autoencoder [(Child, R., 2021)](#child2021very) for generating synthetic three-dimensional images based on neuroimaging training data. The Wikipedia page for [variational autoencoders](https://en.wikipedia.org/wiki/Variational_autoencoder) contains some background material.
 
 ## Installation
 
@@ -118,34 +118,42 @@ python -m torch.distributed.run \
 where `{ip_address}` is the IP address of the rank 0 node and `{port_number}` is a free 
 port on the rank 0 node. 
 
-## Hyperparameters
+## Model configuration
 
-The hyperparameters specifying the model and training run configuration are specified in a JSON file. Details of some of the more important hyperparameters and their keys are:
+The properties specifying the model and training run configuration are specified in a JSON file. The [`model_configuration.schema.json`](model_configuration.schema.json) file in the root of the repository is a [JSON Schema](https://json-schema.org/) describing the properties which can be set in a model configuration file, the values which they can be validly set to and the default values used if properties are not explicitly set. A human-readable summary can be viewed at [`model_configuration_schema.md`](model_configuration_schema.md).
+
+As a brief summary, some of the more important properties which you may wish to edit are
 
 - `batch_size`:
   The number of images per minibatch for the stochastic gradient descent training algorithm. For the `128×128×128` configuration the model a batch size of 1 is needed to keep the peak GPU memory use below 32GiB. Higher batch sizes are possible at lower resolutions or on GPUs with more device memory.
 - `max_niis_to_use`:
   The maximum number of NiFTI files to use in a training epoch. Use this to define a shorter epoch, for example to quickly test visualisations are being saved correctly.
 - `resolution`:
-  Specifies the target resolution to generate images at along each of the three image dimensions, for example `128` for a `128×128×128` resolution. Must be an integer power of 2.
+  Specifies the target resolution to generate images at along each of the three image dimensions, for example `128` for a `128×128×128` resolution. Must be a positive integer power of 2.
 - `visualise_training_pipeline_before_starting`:
   Set this to `true` to see a folder (`pipeline_test`, in the output folder) of augmented examples.
+- `verbose`:
+  Set this to `true` to get more detailed printed output during training.
 
 ### Layer definitions
 
-The model architecture is specified by a series of hyperparameters `latent_feature_maps_per_resolution`, `channels_per_latent`, `channels`, `kernel_sizes_bottom_up` and `kernel_sizes_top_down`, each of which is list of `k + 1` integers where `k` is the base-2 logarithm of the resolution along each dimension - for example for the `128×128×128` configuration `k = 7`. The corresponding entries in all lists define a convolution block and after each of these we downsample by a factor of two in each spatial dimension on the way up and upsample by a factor of two in each spatial dimension on the way back down. This version of the code has not been tested when these lists have fewer than `k + 1` elements - you have been warned!
+The model architecture is specified by a series of properties `channels`, `channels_top_down`, `channels_hidden`, `channels_hidden_top_down`, `channels_per_latent`, `latent_feature_maps_per_resolution`, `kernel_sizes_bottom_up` and `kernel_sizes_top_down`, each of which is list of `k + 1` integers where `k` is the base-2 logarithm of the value of `resolution` - for example for the `128×128×128` configuration with `resolution` equal to 128, `k = 7`. The corresponding entries in all lists define a convolution block and after each of these we downsample by a factor of two in each spatial dimension on the way up and upsample by a factor of two in each spatial dimension on the way back down. This version of the code has not been tested when these lists have fewer than `k + 1` elements - you have been warned!
 
 As an example the definition for the example `128×128×128` configuration is
 
 ```JSON
-  "latent_feature_maps_per_resolution":  [2, 7, 6, 5, 4, 3, 2, 1],
-  "channels_per_latent": [20, 20, 20, 20, 20, 20, 20, 200],
-  "channels": [20, 40, 60, 80, 100, 120, 140, 160],
-  "kernel_sizes_bottom_up": [3, 3, 3, 3, 3, 3, 2, 1],
-  "kernel_sizes_top_down": [3, 3, 3, 3, 3, 3, 2, 1],
+    "channels": [20, 40, 60, 80, 100, 120, 140, 160],
+    "channels_top_down": [20, 40, 60, 80, 100, 120, 140, 160],
+    "channels_hidden": [20, 40, 60, 80, 100, 120, 140, 160],
+    "channels_hidden_top_down": [20, 40, 60, 80, 100, 120, 140, 160],
+    "channels_per_latent": [20, 20, 20, 20, 20, 20, 20, 200],
+    "latent_feature_maps_per_resolution": [2, 7, 6, 5, 4, 3, 2, 1],
+    "kernel_sizes_bottom_up": [3, 3, 3, 3, 3, 3, 2, 1],
+    "kernel_sizes_top_down": [3, 3, 3, 3, 3, 3, 2, 1]
+}
 ```
 
-where for example the first line specifies that, reading left to right, we have 2 latent dimensions per channel at `128×128×128` resolution, 7 latent dimensions per channel at `64×64×64` resolution, 6 latents per channel at `32×32×32` resolution, 5 latent dimensions per channel at `16×16×16` resolution and so on.
+where for example the first line specifies that, reading left to right, we have 20 output channels in the residual network block at the `128×128×128` resolution, 40 output channels in the residual network block at `64×64×64` resolution, 60 output channels in the residual network block at `32×32×32` resolution, 80  output channels in the residual network block at `16×16×16` resolution and so on.
 
 ## Authors
 
@@ -158,3 +166,12 @@ The Wellcome Trust, the UCLH NIHR Biomedical Research Centre
 ## Licence
 
 The code is under the [GNU General Public License Version 3](LICENSE).
+
+## References
+
+  1. <a id='child2021very'></a> Child, R., 2021. 
+  Very deep VAEs generalize autoregressive models and can outperform them on images.  
+  In _Proceedings of the 9th International Conference on Learning Representations (ICLR)_.
+  [(OpenReview)](https://openreview.net/forum?id=RLRXCV6DbEJ) 
+  [(arXiv)](https://arxiv.org/abs/2011.10650)
+  
