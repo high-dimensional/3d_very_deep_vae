@@ -33,6 +33,7 @@ authors:
     email: p.nachev@ucl.ac.uk
     affiliation: King's College London
     orcid: 'https://orcid.org/0000-0002-2718-4423'
+doi: 10.5281/zenodo.6782948
 repository-code: 'https://github.com/r-gray/3d_very_deep_vae'
 abstract: >-
   PyTorch implementations of variational autoencoder

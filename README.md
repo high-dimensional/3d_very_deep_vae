@@ -1,6 +1,7 @@
 # `3d_very_deep_vae`
 
 [![Continuous integration](https://github.com/high-dimensional/3d_very_deep_vae/actions/workflows/ci.yml/badge.svg)](https://github.com/high-dimensional/3d_very_deep_vae/actions/workflows/ci.yml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6782948.svg)](https://doi.org/10.5281/zenodo.6782948)
 
 [PyTorch](https://pytorch.org/) implementation of (a streamlined version of) Rewon Child's 'very deep' variational autoencoder [(Child, R., 2021)](#child2021very) for generating synthetic three-dimensional images based on neuroimaging training data. The Wikipedia page for [variational autoencoders](https://en.wikipedia.org/wiki/Variational_autoencoder) contains some background material.
 
